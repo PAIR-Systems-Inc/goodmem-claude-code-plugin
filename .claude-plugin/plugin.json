@@ -1,0 +1,25 @@
+{
+  "name": "goodmem",
+  "description": "GoodMem memory infrastructure for AI agents. Use Python SDK skills to write code that manages embedders, spaces, and memories, or use MCP tools to perform GoodMem operations directly via natural language.",
+  "version": "0.1.0",
+  "author": {
+    "name": "PAIR Systems",
+    "email": "forrest@pairsys.ai"
+  },
+  "homepage": "https://docs.goodmem.ai",
+  "repository": "https://github.com/PAIR-Systems-Inc/goodmem-claude-code-plugin",
+  "license": "Apache-2.0",
+  "keywords": [
+    "goodmem",
+    "memory",
+    "vector",
+    "embeddings",
+    "RAG",
+    "AI",
+    "agents",
+    "LLMs",
+    "rerankers",
+    "embedders",
+    "MCP"
+  ]
+}
