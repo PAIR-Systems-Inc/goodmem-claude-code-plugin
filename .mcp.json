@@ -1,12 +1,8 @@
 {
   "mcpServers": {
     "goodmem": {
-      "command": "npx",
-      "args": ["-y", "@pairsystems/goodmem-mcp"],
-      "env": {
-        "GOODMEM_BASE_URL": "${GOODMEM_BASE_URL}",
-        "GOODMEM_API_KEY": "${GOODMEM_API_KEY}"
-      }
+      "command": "node",
+      "args": ["${CLAUDE_PLUGIN_ROOT}/mcp/dist/index.js"]
     }
   }
 }
