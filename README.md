@@ -9,6 +9,12 @@ This plugin provides two ways to work with GoodMem from Claude Code:
 - **Python SDK skills** — Claude writes Python code using the GoodMem SDK, guided by the full API reference. Use this when building applications that integrate with GoodMem.
 - **MCP tools** — Claude calls GoodMem APIs directly via natural language. Use this to create embedders, store memories, run retrieval, and manage resources without writing code.
 
+## Use cases
+
+- **Deep Research agent** — Create an embedder and space, ingest research papers and documents, then ask complex questions that retrieve and synthesize information across your entire knowledge base.
+- **RAG pipeline** — Configure embedders, rerankers, and LLMs, store source materials as memories, and retrieve relevant context for answering questions.
+- **Self-improving support agent** — Ingest historical issue tickets and resolutions, search for solutions matching a new problem description, and iteratively store new discoveries and fixes as memories so future troubleshooting gets smarter over time.
+
 ## Installation
 
 **From the official marketplace:**
