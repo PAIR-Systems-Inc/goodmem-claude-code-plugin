@@ -17,3 +17,4 @@ Key principles:
 - Use `api_key="sk-..."` on create (not `credentials`) — the SDK builds the credential struct
 - Iterate paginated results directly: `for item in client.spaces.list():`
 - Use `stream=False` on retrieve if you want a plain list instead of a stream
+- **SaaS endpoints require `api_key`**: creating an embedder/LLM/reranker for a known SaaS provider (OpenAI, Cohere, Voyage, Jina, Anthropic, Google, Mistral) without `api_key` raises `ValueError: Provider '...' at '...' requires an API key.` — always pass `api_key="sk-..."`

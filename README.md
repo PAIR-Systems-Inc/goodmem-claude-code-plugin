@@ -77,6 +77,10 @@ When creating embedders, LLMs, or rerankers, just provide `model_identifier` and
 
 Explicit values always override inferred defaults.
 
+### Credential validation
+
+SaaS providers (OpenAI, Cohere, Voyage, Jina, and OpenAI-compatible endpoints for Anthropic, Google, Mistral) require API credentials. If you create an embedder, LLM, or reranker pointing at a known SaaS hostname without providing credentials, the plugin raises a clear error before the request reaches the server. Pass `credentials` (MCP) or `api_key` (Python SDK) to proceed.
+
 ## Links
 
 - [GoodMem Documentation](https://docs.goodmem.ai)

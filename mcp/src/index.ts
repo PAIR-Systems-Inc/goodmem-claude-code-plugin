@@ -98,7 +98,7 @@ async function callApiNdjson(
 }
 
 // ---------------------------------------------------------------------------
-// Model registries + auto-inference
+// Model registries + auto-inference + credential check
 // ---------------------------------------------------------------------------
 
 // Model registries — embedded from v2/registries/ at generation time.
@@ -896,13 +896,48 @@ const MODEL_REGISTRY: Record<string, Record<string, Record<string, unknown>>> = 
 // Provider → default endpoint URL
 const PROVIDER_ENDPOINTS: Record<string, string> = {
   "OPENAI": "https://api.openai.com/v1",
+  "COHERE": "https://api.cohere.com",
   "VOYAGE": "https://api.voyageai.com/v1",
-  "COHERE": "https://api.cohere.com/v2",
-  "GOOGLE": "https://generativelanguage.googleapis.com",
-  "JINA": "https://api.jina.ai/v1",
-  "MISTRAL": "https://api.mistral.ai/v1",
-  "ANTHROPIC": "https://api.anthropic.com/v1"
+  "JINA": "https://api.jina.ai"
 };
+
+// Provider credential requirements — embedded from registries/providers.json at generation time.
+// Maps provider type → hostnames that require API credentials.
+const PROVIDER_CREDENTIAL_REQUIREMENTS: Record<string, string[]> = {
+  "OPENAI": [
+    "api.openai.com",
+    "generativelanguage.googleapis.com",
+    "api.anthropic.com",
+    "api.mistral.ai"
+  ],
+  "COHERE": [
+    "api.cohere.com"
+  ],
+  "VOYAGE": [
+    "api.voyageai.com"
+  ],
+  "JINA": [
+    "api.jina.ai"
+  ]
+};
+
+function checkCredentialRequired(args: Record<string, unknown>): void {
+  const provider = args.provider_type as string | undefined;
+  const endpointUrl = args.endpoint_url as string | undefined;
+  if (!provider || !endpointUrl) return;
+  const requiredHosts = PROVIDER_CREDENTIAL_REQUIREMENTS[provider];
+  if (!requiredHosts) return;
+  const credentials = args.credentials;
+  if (credentials !== undefined && credentials !== null) return;
+  let host: string;
+  try { host = new URL(endpointUrl).hostname; } catch { return; }
+  if (requiredHosts.includes(host)) {
+    throw new Error(
+      `Provider '${provider}' at '${endpointUrl}' requires credentials. `
+      + `Pass credentials with your API key.`
+    );
+  }
+}
 
 
 // ---------------------------------------------------------------------------
@@ -970,7 +1005,7 @@ function autoInferFromRegistry(
 
 const server = new McpServer({
   name: "goodmem",
-  version: "0.1.0",
+  version: "0.1.1",
 });
 
 // ---------------------------------------------------------------------------
@@ -1185,6 +1220,7 @@ function registerTools() {
     },
     async (args) => {
       const inferred = autoInferFromRegistry("embedders", args as Record<string, unknown>);
+      checkCredentialRequired(inferred);
       const body: Record<string, unknown> = {};
       if (inferred.display_name !== undefined) body["displayName"] = inferred.display_name;
       if (inferred.description !== undefined) body["description"] = inferred.description;
@@ -1339,6 +1375,7 @@ function registerTools() {
     },
     async (args) => {
       const inferred = autoInferFromRegistry("llms", args as Record<string, unknown>);
+      checkCredentialRequired(inferred);
       const body: Record<string, unknown> = {};
       if (inferred.display_name !== undefined) body["displayName"] = inferred.display_name;
       if (inferred.description !== undefined) body["description"] = inferred.description;
@@ -1737,6 +1774,7 @@ function registerTools() {
     },
     async (args) => {
       const inferred = autoInferFromRegistry("rerankers", args as Record<string, unknown>);
+      checkCredentialRequired(inferred);
       const body: Record<string, unknown> = {};
       if (inferred.display_name !== undefined) body["displayName"] = inferred.display_name;
       if (inferred.description !== undefined) body["description"] = inferred.description;

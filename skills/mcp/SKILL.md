@@ -32,6 +32,8 @@ Register a new embedding model.
 | `dimensionality` | integer | no | Embedding dimensions |
 | `credentials` | object | no | API credentials for the provider |
 
+**Note**: SaaS providers (OpenAI, Cohere, Voyage, Jina, Anthropic, Google, Mistral) require `credentials`. Omitting credentials for a known SaaS endpoint throws an error before the request is sent: `Provider '...' at '...' requires credentials.`
+
 ### `goodmem_embedders_list`
 List all registered embedders. Supports pagination via `max_results` and `next_token`.
 
