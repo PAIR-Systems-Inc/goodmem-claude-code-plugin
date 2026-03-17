@@ -1,10 +1,10 @@
 ---
-name: goodmem
-description: "Use when the user wants to interact with GoodMem — creating embedders, spaces, memories, retrieval, managing API keys, etc. Provides the complete SDK reference for the goodmem Python package."
+name: goodmem:python
+description: "Use when the user wants to write Python code that interacts with GoodMem — creating embedders, spaces, memories, retrieval, managing API keys, etc. Provides the complete SDK reference for the goodmem Python package."
 user-invocable: false
 ---
 
-You have access to the GoodMem Python SDK. Use it to accomplish the user's request.
+You have access to the GoodMem Python SDK. Use it to write Python code that accomplishes the user's request.
 
 See [reference.md](reference.md) for the complete API reference including all method signatures,
 convenience shortcuts, available model identifiers, error handling, and common patterns.
