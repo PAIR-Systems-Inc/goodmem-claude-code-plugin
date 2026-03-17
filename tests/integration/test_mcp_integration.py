@@ -380,3 +380,85 @@ class TestMcpRagWorkflow:
                         mcp_session.call_tool(tool, {"id": ids[resource]})
                     except Exception:
                         pass
+
+
+@pytest.mark.integration
+class TestMcpAutoInference:
+    """Test model registry auto-inference in MCP tools."""
+
+    def test_lookup_known_model(self, mcp_session: McpSession):
+        """Looking up a known model should return its registry entry."""
+        resp = mcp_session.call_tool("goodmem_lookup_model", {
+            "model_identifier": "text-embedding-3-large",
+        })
+        data = _tool_result(resp)
+        assert data["providerType"] == "OPENAI"
+        assert data["type"] == "embedder"
+
+    def test_lookup_unknown_model(self, mcp_session: McpSession):
+        """Looking up an unknown model should list available models."""
+        resp = mcp_session.call_tool("goodmem_lookup_model", {
+            "model_identifier": "nonexistent-model-xyz",
+        })
+        content = resp["result"]["content"][0]["text"]
+        assert "not found" in content
+        assert "text-embedding-3-large" in content  # should list available
+
+    def test_create_embedder_with_auto_inference(self, mcp_session: McpSession):
+        """Creating an embedder with just model_identifier should auto-fill fields."""
+        openai_key = os.environ.get("OPENAI_API_KEY")
+        if not openai_key:
+            pytest.skip("OPENAI_API_KEY not set")
+
+        embedder_id = None
+        try:
+            # Only provide model_identifier, display_name, and credentials
+            # provider_type, endpoint_url, dimensionality should be auto-inferred
+            resp = mcp_session.call_tool("goodmem_embedders_create", {
+                "display_name": "Auto-inferred Embedder",
+                "model_identifier": "text-embedding-3-small",
+                "credentials": {
+                    "kind": "CREDENTIAL_KIND_API_KEY",
+                    "apiKey": {"inlineSecret": openai_key},
+                },
+            })
+            embedder = _tool_result(resp)
+            embedder_id = embedder["embedderId"]
+
+            # Verify auto-inferred fields
+            assert embedder["providerType"] == "OPENAI"
+            assert embedder["endpointUrl"] == "https://api.openai.com/v1"
+            assert embedder["dimensionality"] == 1536
+            assert embedder["distributionType"] == "DENSE"
+        finally:
+            if embedder_id:
+                mcp_session.call_tool("goodmem_embedders_delete", {"id": embedder_id})
+
+    def test_explicit_override_wins(self, mcp_session: McpSession):
+        """User-provided values should override registry defaults."""
+        openai_key = os.environ.get("OPENAI_API_KEY")
+        if not openai_key:
+            pytest.skip("OPENAI_API_KEY not set")
+
+        embedder_id = None
+        try:
+            # Explicitly provide dimensionality=256 (registry default is 1536)
+            resp = mcp_session.call_tool("goodmem_embedders_create", {
+                "display_name": "Override Test Embedder",
+                "model_identifier": "text-embedding-3-small",
+                "dimensionality": 256,
+                "credentials": {
+                    "kind": "CREDENTIAL_KIND_API_KEY",
+                    "apiKey": {"inlineSecret": openai_key},
+                },
+            })
+            embedder = _tool_result(resp)
+            embedder_id = embedder["embedderId"]
+
+            # User override should win
+            assert embedder["dimensionality"] == 256
+            # But provider should still be auto-inferred
+            assert embedder["providerType"] == "OPENAI"
+        finally:
+            if embedder_id:
+                mcp_session.call_tool("goodmem_embedders_delete", {"id": embedder_id})

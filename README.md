@@ -2,12 +2,7 @@
 
 A Claude Code plugin for [GoodMem](https://docs.goodmem.ai) — memory infrastructure for AI agents.
 
-## What it does
-
-This plugin provides two ways to work with GoodMem from Claude Code:
-
-- **Python SDK skills** — Claude writes Python code using the GoodMem SDK, guided by the full API reference. Use this when building applications that integrate with GoodMem.
-- **MCP tools** — Claude calls GoodMem APIs directly via natural language. Use this to create embedders, store memories, run retrieval, and manage resources without writing code.
+With this plugin, you can operate GoodMem's memory infrastructure in plain English — create and manage embedders, rerankers, and LLMs, ingest memories from files, base64 strings, and plain text, and build knowledge-powered agents for RAG and Deep Research. Also includes the full Python SDK reference for writing GoodMem code.
 
 ## Use cases
 
@@ -32,36 +27,55 @@ This plugin provides two ways to work with GoodMem from Claude Code:
 
 ## Setup
 
-Set your GoodMem server credentials as environment variables:
+**Option 1: Environment variables** (set before launching Claude Code)
 
 ```bash
 export GOODMEM_BASE_URL="https://your-server.example.com"
 export GOODMEM_API_KEY="gm_..."
 ```
 
-The MCP tools use these to connect to your GoodMem server. The Python SDK skill works without them (it teaches Claude how to write SDK code, not call APIs directly).
+**Option 2: In-chat configuration** (no env vars needed)
+
+Just tell Claude your server details — it will call `goodmem_configure` automatically:
+
+> "Configure GoodMem with base URL https://my-server.com and API key gm_abc123"
+
+Credentials persist for the session. You can reconfigure anytime to switch servers.
 
 ## What's included
 
 | Component | Description |
 |-----------|-------------|
+| `skills/help/` | Setup guide, available skills overview, example workflows |
 | `skills/python/` | Python SDK reference — method signatures, parameters, examples |
-| `.mcp.json` | MCP server config — 41 tools across 10 namespaces |
+| `skills/mcp/` | MCP tools reference — all 41+ tools with parameters |
+| `.mcp.json` | MCP server with auto-inference from 79 model registries |
+
+### Skills
+
+- **`goodmem:help`** — Overview of all skills, setup instructions, example workflows
+- **`goodmem:python`** — Python SDK reference for writing GoodMem code
+- **`goodmem:mcp`** — MCP tools reference for direct operations
 
 ### MCP tools
 
 The MCP server exposes all GoodMem API operations as tools:
 
+- **goodmem_configure** — set server credentials from chat
+- **goodmem_lookup_model** — look up model info from the registry (79 models: 29 embedders, 34 LLMs, 16 rerankers)
 - **embedders** — create, list, get, update, delete embedding models
 - **llms** — create, list, get, update, delete LLM configurations
 - **rerankers** — create, list, get, update, delete reranker models
 - **spaces** — create, list, get, update, delete memory spaces
 - **memories** — create, list, get, update, delete, retrieve, batch operations
 - **ocr** — extract text from documents
-- **users** — manage users
-- **apikeys** — manage API keys
-- **system** — server info, initialization
-- **admin** — background jobs, drain, license management
+- **users, apikeys, system, admin** — manage users, API keys, server
+
+### Auto-inference
+
+When creating embedders, LLMs, or rerankers, just provide `model_identifier` and the plugin auto-fills provider, endpoint, dimensions, and other fields from the built-in model registry. You only need to provide `display_name`, `model_identifier`, and credentials — everything else is inferred.
+
+Explicit values always override inferred defaults.
 
 ## Links
 

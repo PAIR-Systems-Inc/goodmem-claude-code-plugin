@@ -98,6 +98,873 @@ async function callApiNdjson(
 }
 
 // ---------------------------------------------------------------------------
+// Model registries + auto-inference
+// ---------------------------------------------------------------------------
+
+// Model registries — embedded from v2/registries/ at generation time.
+// Used for auto-inference: model_identifier → provider, endpoint, dimensions, etc.
+const MODEL_REGISTRY: Record<string, Record<string, Record<string, unknown>>> = {
+  "embedders": {
+    "text-embedding-3-large": {
+      "providerType": "OPENAI",
+      "dimensions": {
+        "default": 1536,
+        "range": [
+          1,
+          3072
+        ]
+      },
+      "supportedModalities": [
+        "TEXT"
+      ],
+      "maxSequenceLength": 8192
+    },
+    "text-embedding-3-small": {
+      "providerType": "OPENAI",
+      "dimensions": {
+        "default": 1536,
+        "range": [
+          1,
+          1536
+        ]
+      },
+      "supportedModalities": [
+        "TEXT"
+      ],
+      "maxSequenceLength": 8192
+    },
+    "embed-v4.0": {
+      "providerType": "COHERE",
+      "dimensions": {
+        "default": 1536,
+        "allowed": [
+          256,
+          512,
+          1024,
+          1536
+        ]
+      },
+      "supportedModalities": [
+        "TEXT",
+        "IMAGE"
+      ],
+      "maxSequenceLength": 128000
+    },
+    "embed-english-v3.0": {
+      "providerType": "COHERE",
+      "dimensions": {
+        "default": 1024,
+        "allowed": [
+          1024
+        ]
+      },
+      "supportedModalities": [
+        "TEXT",
+        "IMAGE"
+      ],
+      "maxSequenceLength": 512
+    },
+    "embed-english-light-v3.0": {
+      "providerType": "COHERE",
+      "dimensions": {
+        "default": 384,
+        "allowed": [
+          384
+        ]
+      },
+      "supportedModalities": [
+        "TEXT",
+        "IMAGE"
+      ],
+      "maxSequenceLength": 512
+    },
+    "embed-multilingual-v3.0": {
+      "providerType": "COHERE",
+      "dimensions": {
+        "default": 1024,
+        "allowed": [
+          1024
+        ]
+      },
+      "supportedModalities": [
+        "TEXT",
+        "IMAGE"
+      ],
+      "maxSequenceLength": 512
+    },
+    "embed-multilingual-light-v3.0": {
+      "providerType": "COHERE",
+      "dimensions": {
+        "default": 384,
+        "allowed": [
+          384
+        ]
+      },
+      "supportedModalities": [
+        "TEXT",
+        "IMAGE"
+      ],
+      "maxSequenceLength": 512
+    },
+    "jina-embeddings-v4": {
+      "providerType": "JINA",
+      "dimensions": {
+        "default": 1024,
+        "allowed": [
+          128,
+          256,
+          512,
+          1024,
+          2048
+        ]
+      },
+      "supportedModalities": [
+        "TEXT",
+        "IMAGE",
+        "PDF"
+      ],
+      "maxSequenceLength": 32768
+    },
+    "jina-embeddings-v3": {
+      "providerType": "JINA",
+      "dimensions": {
+        "default": 1024,
+        "allowed": [
+          32,
+          64,
+          128,
+          256,
+          512,
+          768,
+          1024
+        ]
+      },
+      "supportedModalities": [
+        "TEXT"
+      ],
+      "maxSequenceLength": 8192
+    },
+    "jina-embeddings-v2-base-en": {
+      "providerType": "JINA",
+      "dimensions": {
+        "default": 768,
+        "allowed": [
+          768
+        ]
+      },
+      "supportedModalities": [
+        "TEXT"
+      ],
+      "maxSequenceLength": 8192
+    },
+    "jina-embeddings-v2-base-es": {
+      "providerType": "JINA",
+      "dimensions": {
+        "default": 768,
+        "allowed": [
+          768
+        ]
+      },
+      "supportedModalities": [
+        "TEXT"
+      ],
+      "maxSequenceLength": 8192
+    },
+    "jina-embeddings-v2-base-de": {
+      "providerType": "JINA",
+      "dimensions": {
+        "default": 768,
+        "allowed": [
+          768
+        ]
+      },
+      "supportedModalities": [
+        "TEXT"
+      ],
+      "maxSequenceLength": 8192
+    },
+    "jina-embeddings-v2-base-zh": {
+      "providerType": "JINA",
+      "dimensions": {
+        "default": 768,
+        "allowed": [
+          768
+        ]
+      },
+      "supportedModalities": [
+        "TEXT"
+      ],
+      "maxSequenceLength": 8192
+    },
+    "jina-embeddings-v2-base-code": {
+      "providerType": "JINA",
+      "dimensions": {
+        "default": 768,
+        "allowed": [
+          768
+        ]
+      },
+      "supportedModalities": [
+        "TEXT"
+      ],
+      "maxSequenceLength": 8192
+    },
+    "jina-clip-v1": {
+      "providerType": "JINA",
+      "dimensions": {
+        "default": 768,
+        "allowed": [
+          768
+        ]
+      },
+      "supportedModalities": [
+        "TEXT",
+        "IMAGE"
+      ],
+      "maxSequenceLength": 8192
+    },
+    "jina-clip-v2": {
+      "providerType": "JINA",
+      "dimensions": {
+        "default": 1024,
+        "allowed": [
+          64,
+          128,
+          256,
+          512,
+          768,
+          1024
+        ]
+      },
+      "supportedModalities": [
+        "TEXT",
+        "IMAGE"
+      ],
+      "maxSequenceLength": 8192
+    },
+    "voyage-4-large": {
+      "providerType": "VOYAGE",
+      "dimensions": {
+        "default": 1024,
+        "allowed": [
+          256,
+          512,
+          1024,
+          2048
+        ]
+      },
+      "supportedModalities": [
+        "TEXT"
+      ],
+      "maxSequenceLength": 32000
+    },
+    "voyage-4": {
+      "providerType": "VOYAGE",
+      "dimensions": {
+        "default": 1024,
+        "allowed": [
+          256,
+          512,
+          1024,
+          2048
+        ]
+      },
+      "supportedModalities": [
+        "TEXT"
+      ],
+      "maxSequenceLength": 32000
+    },
+    "voyage-4-lite": {
+      "providerType": "VOYAGE",
+      "dimensions": {
+        "default": 1024,
+        "allowed": [
+          256,
+          512,
+          1024,
+          2048
+        ]
+      },
+      "supportedModalities": [
+        "TEXT"
+      ],
+      "maxSequenceLength": 32000
+    },
+    "voyage-code-3": {
+      "providerType": "VOYAGE",
+      "dimensions": {
+        "default": 1024,
+        "allowed": [
+          256,
+          512,
+          1024,
+          2048
+        ]
+      },
+      "supportedModalities": [
+        "TEXT"
+      ],
+      "maxSequenceLength": 32000
+    },
+    "voyage-3-large": {
+      "providerType": "VOYAGE",
+      "dimensions": {
+        "default": 1024,
+        "allowed": [
+          256,
+          512,
+          1024,
+          2048
+        ]
+      },
+      "supportedModalities": [
+        "TEXT"
+      ],
+      "maxSequenceLength": 32000
+    },
+    "voyage-3.5": {
+      "providerType": "VOYAGE",
+      "dimensions": {
+        "default": 1024,
+        "allowed": [
+          256,
+          512,
+          1024,
+          2048
+        ]
+      },
+      "supportedModalities": [
+        "TEXT"
+      ],
+      "maxSequenceLength": 32000
+    },
+    "voyage-3.5-lite": {
+      "providerType": "VOYAGE",
+      "dimensions": {
+        "default": 1024,
+        "allowed": [
+          256,
+          512,
+          1024,
+          2048
+        ]
+      },
+      "supportedModalities": [
+        "TEXT"
+      ],
+      "maxSequenceLength": 32000
+    },
+    "voyage-3": {
+      "providerType": "VOYAGE",
+      "dimensions": {
+        "default": 1024,
+        "allowed": [
+          1024
+        ]
+      },
+      "supportedModalities": [
+        "TEXT"
+      ],
+      "maxSequenceLength": 32000
+    },
+    "voyage-3-lite": {
+      "providerType": "VOYAGE",
+      "dimensions": {
+        "default": 512,
+        "allowed": [
+          512
+        ]
+      },
+      "supportedModalities": [
+        "TEXT"
+      ],
+      "maxSequenceLength": 32000
+    },
+    "voyage-finance-2": {
+      "providerType": "VOYAGE",
+      "dimensions": {
+        "default": 1024,
+        "allowed": [
+          1024
+        ]
+      },
+      "supportedModalities": [
+        "TEXT"
+      ],
+      "maxSequenceLength": 32000
+    },
+    "voyage-law-2": {
+      "providerType": "VOYAGE",
+      "dimensions": {
+        "default": 1024,
+        "allowed": [
+          1024
+        ]
+      },
+      "supportedModalities": [
+        "TEXT"
+      ],
+      "maxSequenceLength": 16000
+    },
+    "voyage-code-2": {
+      "providerType": "VOYAGE",
+      "dimensions": {
+        "default": 1536,
+        "allowed": [
+          1536
+        ]
+      },
+      "supportedModalities": [
+        "TEXT"
+      ],
+      "maxSequenceLength": 16000
+    },
+    "voyage-multilingual-2": {
+      "providerType": "VOYAGE",
+      "dimensions": {
+        "default": 1024,
+        "allowed": [
+          1024
+        ]
+      },
+      "supportedModalities": [
+        "TEXT"
+      ],
+      "maxSequenceLength": 32000
+    }
+  },
+  "llms": {
+    "gpt-5.2": {
+      "providerType": "OPENAI",
+      "supportedModalities": [
+        "TEXT",
+        "IMAGE"
+      ],
+      "maxContextLength": 400000
+    },
+    "gpt-5.2-pro": {
+      "providerType": "OPENAI",
+      "supportedModalities": [
+        "TEXT",
+        "IMAGE"
+      ],
+      "maxContextLength": 400000
+    },
+    "gpt-5.1": {
+      "providerType": "OPENAI",
+      "supportedModalities": [
+        "TEXT",
+        "IMAGE"
+      ],
+      "maxContextLength": 400000
+    },
+    "gpt-5": {
+      "providerType": "OPENAI",
+      "supportedModalities": [
+        "TEXT",
+        "IMAGE"
+      ],
+      "maxContextLength": 400000
+    },
+    "gpt-5-mini": {
+      "providerType": "OPENAI",
+      "supportedModalities": [
+        "TEXT",
+        "IMAGE"
+      ],
+      "maxContextLength": 400000
+    },
+    "gpt-5-nano": {
+      "providerType": "OPENAI",
+      "supportedModalities": [
+        "TEXT",
+        "IMAGE"
+      ],
+      "maxContextLength": 400000
+    },
+    "o3": {
+      "providerType": "OPENAI",
+      "supportedModalities": [
+        "TEXT",
+        "IMAGE"
+      ],
+      "maxContextLength": 200000
+    },
+    "o3-mini": {
+      "providerType": "OPENAI",
+      "supportedModalities": [
+        "TEXT",
+        "IMAGE"
+      ],
+      "maxContextLength": 200000
+    },
+    "o4-mini": {
+      "providerType": "OPENAI",
+      "supportedModalities": [
+        "TEXT",
+        "IMAGE"
+      ],
+      "maxContextLength": 200000
+    },
+    "gpt-4.1": {
+      "providerType": "OPENAI",
+      "supportedModalities": [
+        "TEXT",
+        "IMAGE"
+      ],
+      "maxContextLength": 1047576
+    },
+    "gpt-4.1-mini": {
+      "providerType": "OPENAI",
+      "supportedModalities": [
+        "TEXT",
+        "IMAGE"
+      ],
+      "maxContextLength": 1047576
+    },
+    "gpt-4.1-nano": {
+      "providerType": "OPENAI",
+      "supportedModalities": [
+        "TEXT",
+        "IMAGE"
+      ],
+      "maxContextLength": 1047576
+    },
+    "gpt-4o": {
+      "providerType": "OPENAI",
+      "supportedModalities": [
+        "TEXT",
+        "IMAGE",
+        "AUDIO"
+      ],
+      "maxContextLength": 128000
+    },
+    "gpt-4o-mini": {
+      "providerType": "OPENAI",
+      "supportedModalities": [
+        "TEXT",
+        "IMAGE",
+        "AUDIO"
+      ],
+      "maxContextLength": 128000
+    },
+    "gpt-4-turbo": {
+      "providerType": "OPENAI",
+      "supportedModalities": [
+        "TEXT",
+        "IMAGE"
+      ],
+      "maxContextLength": 128000
+    },
+    "gpt-3.5-turbo": {
+      "providerType": "OPENAI",
+      "supportedModalities": [
+        "TEXT"
+      ],
+      "maxContextLength": 16385
+    },
+    "o1": {
+      "providerType": "OPENAI",
+      "supportedModalities": [
+        "TEXT"
+      ],
+      "maxContextLength": 200000
+    },
+    "o1-mini": {
+      "providerType": "OPENAI",
+      "supportedModalities": [
+        "TEXT"
+      ],
+      "maxContextLength": 128000
+    },
+    "o1-preview": {
+      "providerType": "OPENAI",
+      "supportedModalities": [
+        "TEXT"
+      ],
+      "maxContextLength": 128000
+    },
+    "command-a-03-2025": {
+      "providerType": "COHERE",
+      "supportedModalities": [
+        "TEXT"
+      ],
+      "maxContextLength": 256000
+    },
+    "command-r7b-12-2024": {
+      "providerType": "COHERE",
+      "supportedModalities": [
+        "TEXT"
+      ],
+      "maxContextLength": 128000
+    },
+    "command-a-translate-08-2025": {
+      "providerType": "COHERE",
+      "supportedModalities": [
+        "TEXT"
+      ],
+      "maxContextLength": 8000
+    },
+    "command-a-reasoning-08-2025": {
+      "providerType": "COHERE",
+      "supportedModalities": [
+        "TEXT"
+      ],
+      "maxContextLength": 256000
+    },
+    "command-a-vision-07-2025": {
+      "providerType": "COHERE",
+      "supportedModalities": [
+        "TEXT",
+        "IMAGE"
+      ],
+      "maxContextLength": 128000
+    },
+    "command-r-08-2024": {
+      "providerType": "COHERE",
+      "supportedModalities": [
+        "TEXT"
+      ],
+      "maxContextLength": 128000
+    },
+    "command-r-plus-08-2024": {
+      "providerType": "COHERE",
+      "supportedModalities": [
+        "TEXT"
+      ],
+      "maxContextLength": 128000
+    },
+    "c4ai-aya-expanse-8b": {
+      "providerType": "COHERE",
+      "supportedModalities": [
+        "TEXT"
+      ],
+      "maxContextLength": 8000
+    },
+    "c4ai-aya-expanse-32b": {
+      "providerType": "COHERE",
+      "supportedModalities": [
+        "TEXT"
+      ],
+      "maxContextLength": 128000
+    },
+    "c4ai-aya-vision-8b": {
+      "providerType": "COHERE",
+      "supportedModalities": [
+        "TEXT",
+        "IMAGE"
+      ],
+      "maxContextLength": 16000
+    },
+    "c4ai-aya-vision-32b": {
+      "providerType": "COHERE",
+      "supportedModalities": [
+        "TEXT",
+        "IMAGE"
+      ],
+      "maxContextLength": 16000
+    },
+    "command-r-03-2024": {
+      "providerType": "COHERE",
+      "supportedModalities": [
+        "TEXT"
+      ],
+      "maxContextLength": 128000
+    },
+    "command-r-plus-04-2024": {
+      "providerType": "COHERE",
+      "supportedModalities": [
+        "TEXT"
+      ],
+      "maxContextLength": 128000
+    },
+    "command": {
+      "providerType": "COHERE",
+      "supportedModalities": [
+        "TEXT"
+      ],
+      "maxContextLength": 4000
+    },
+    "command-light": {
+      "providerType": "COHERE",
+      "supportedModalities": [
+        "TEXT"
+      ],
+      "maxContextLength": 4000
+    }
+  },
+  "rerankers": {
+    "rerank-v4.0-pro": {
+      "providerType": "COHERE",
+      "supportedModalities": [
+        "TEXT"
+      ]
+    },
+    "rerank-v4.0-fast": {
+      "providerType": "COHERE",
+      "supportedModalities": [
+        "TEXT"
+      ]
+    },
+    "rerank-v3.5": {
+      "providerType": "COHERE",
+      "supportedModalities": [
+        "TEXT"
+      ]
+    },
+    "rerank-english-v3.0": {
+      "providerType": "COHERE",
+      "supportedModalities": [
+        "TEXT"
+      ]
+    },
+    "rerank-multilingual-v3.0": {
+      "providerType": "COHERE",
+      "supportedModalities": [
+        "TEXT"
+      ]
+    },
+    "jina-reranker-v3": {
+      "providerType": "JINA",
+      "supportedModalities": [
+        "TEXT"
+      ]
+    },
+    "jina-reranker-v2-base-multilingual": {
+      "providerType": "JINA",
+      "supportedModalities": [
+        "TEXT"
+      ]
+    },
+    "jina-reranker-v1-base-en": {
+      "providerType": "JINA",
+      "supportedModalities": [
+        "TEXT"
+      ]
+    },
+    "jina-reranker-v1-turbo-en": {
+      "providerType": "JINA",
+      "supportedModalities": [
+        "TEXT"
+      ]
+    },
+    "jina-reranker-v1-tiny-en": {
+      "providerType": "JINA",
+      "supportedModalities": [
+        "TEXT"
+      ]
+    },
+    "rerank-2.5": {
+      "providerType": "VOYAGE",
+      "supportedModalities": [
+        "TEXT"
+      ]
+    },
+    "rerank-2.5-lite": {
+      "providerType": "VOYAGE",
+      "supportedModalities": [
+        "TEXT"
+      ]
+    },
+    "rerank-2": {
+      "providerType": "VOYAGE",
+      "supportedModalities": [
+        "TEXT"
+      ]
+    },
+    "rerank-2-lite": {
+      "providerType": "VOYAGE",
+      "supportedModalities": [
+        "TEXT"
+      ]
+    },
+    "rerank-1": {
+      "providerType": "VOYAGE",
+      "supportedModalities": [
+        "TEXT"
+      ]
+    },
+    "rerank-lite-1": {
+      "providerType": "VOYAGE",
+      "supportedModalities": [
+        "TEXT"
+      ]
+    }
+  }
+};
+
+// Provider → default endpoint URL
+const PROVIDER_ENDPOINTS: Record<string, string> = {
+  "OPENAI": "https://api.openai.com/v1",
+  "VOYAGE": "https://api.voyageai.com/v1",
+  "COHERE": "https://api.cohere.com/v2",
+  "GOOGLE": "https://generativelanguage.googleapis.com",
+  "JINA": "https://api.jina.ai/v1",
+  "MISTRAL": "https://api.mistral.ai/v1",
+  "ANTHROPIC": "https://api.anthropic.com/v1"
+};
+
+
+// ---------------------------------------------------------------------------
+// Auto-inference: fill missing fields from model registry
+// ---------------------------------------------------------------------------
+
+type RegistryType = "embedders" | "llms" | "rerankers";
+
+function autoInferFromRegistry(
+  registryType: RegistryType,
+  args: Record<string, unknown>,
+): Record<string, unknown> {
+  const result = { ...args };
+  const modelId = result.model_identifier as string | undefined;
+  if (!modelId) return result;
+
+  const registry = MODEL_REGISTRY[registryType] ?? {};
+  const entry = registry[modelId];
+
+  // camelCase → snake_case mapping for fields the handler reads
+  const camelToSnake: Record<string, string> = {
+    providerType: "provider_type",
+    endpointUrl: "endpoint_url",
+    dimensionality: "dimensionality",
+    distributionType: "distribution_type",
+    supportedModalities: "supported_modalities",
+    maxSequenceLength: "max_sequence_length",
+    maxContextLength: "max_context_length",
+  };
+
+  if (entry) {
+    // Auto-fill from registry — user-provided values always win
+    for (const [key, value] of Object.entries(entry)) {
+      const snakeKey = camelToSnake[key] ?? key;
+      if (key === "dimensions") {
+        // Special: extract default dimensionality from dimensions.default
+        const dims = value as Record<string, unknown> | undefined;
+        if (dims?.default !== undefined && result.dimensionality === undefined) {
+          result.dimensionality = dims.default;
+        }
+      } else if (result[snakeKey] === undefined) {
+        result[snakeKey] = value;
+      }
+    }
+  }
+
+  // Endpoint inference: derive endpoint_url from provider_type
+  if (result.endpoint_url === undefined && result.provider_type !== undefined) {
+    const ep = PROVIDER_ENDPOINTS[result.provider_type as string];
+    if (ep) result.endpoint_url = ep;
+  }
+
+  // Default distribution_type for embedders
+  if (registryType === "embedders" && result.distribution_type === undefined) {
+    result.distribution_type = "DENSE";
+  }
+
+  return result;
+}
+
+
+// ---------------------------------------------------------------------------
 // MCP Server
 // ---------------------------------------------------------------------------
 
@@ -135,6 +1002,40 @@ server.tool(
     } catch (err) {
       return { content: [{ type: "text" as const, text: `Credentials saved but could not connect to ${goodmemBaseUrl}: ${err}. Check your base_url.` }] };
     }
+  }
+);
+
+// ---------------------------------------------------------------------------
+// Model lookup tool — inspect registry entries
+// ---------------------------------------------------------------------------
+
+server.tool(
+  "goodmem_lookup_model",
+  "Look up a model in the registry to see its provider, endpoint, dimensions, and other auto-inferred fields. Use this to check what models are available before creating an embedder, LLM, or reranker.",
+  {
+    model_identifier: z.string().describe("Model name to look up (e.g., text-embedding-3-large, gpt-4o, rerank-2)"),
+    type: z.enum(["embedder", "llm", "reranker"]).describe("Model type to search").optional(),
+  },
+  async (args) => {
+    const searches: [string, string][] = args.type
+      ? [[args.type + "s", args.type]]
+      : [["embedders", "embedder"], ["llms", "llm"], ["rerankers", "reranker"]];
+
+    for (const [registryKey, label] of searches) {
+      const registry = MODEL_REGISTRY[registryKey] ?? {};
+      const entry = registry[args.model_identifier];
+      if (entry) {
+        return { content: [{ type: "text" as const, text: JSON.stringify({
+          model_identifier: args.model_identifier,
+          type: label,
+          ...entry,
+          endpointUrl: PROVIDER_ENDPOINTS[(entry as Record<string, unknown>).providerType as string] ?? undefined,
+        }, null, 2) }] };
+      }
+    }
+    const allModels = Object.entries(MODEL_REGISTRY)
+      .flatMap(([type, models]) => Object.keys(models).map(m => `${type.slice(0, -1)}: ${m}`));
+    return { content: [{ type: "text" as const, text: `Model "${args.model_identifier}" not found in registry. Available models:\n${allModels.join("\n")}` }] };
   }
 );
 
@@ -262,14 +1163,14 @@ function registerTools() {
     {
       display_name: z.string().describe("User-facing name of the embedder"),
       description: z.string().describe("Description of the embedder").optional(),
-      provider_type: z.enum(["OPENAI", "VLLM", "TEI", "LLAMA_CPP", "VOYAGE", "COHERE", "JINA"]).describe("Type of embedding provider"),
-      endpoint_url: z.string().describe("API endpoint URL"),
+      provider_type: z.enum(["OPENAI", "VLLM", "TEI", "LLAMA_CPP", "VOYAGE", "COHERE", "JINA"]).describe("Type of embedding provider (auto-inferred from model_identifier if omitted)").optional(),
+      endpoint_url: z.string().describe("API endpoint URL (auto-inferred from model_identifier if omitted)").optional(),
       api_path: z.string().describe("API path for embeddings request (defaults: Cohere /v2/embed, TEI /embed, others /embeddings)").optional(),
       model_identifier: z.string().describe("Model identifier"),
-      dimensionality: z.number().int().describe("Output vector dimensions"),
-      distribution_type: z.enum(["DENSE", "SPARSE"]).describe("Type of embedding distribution (DENSE or SPARSE)"),
-      max_sequence_length: z.number().int().describe("Maximum input sequence length").optional(),
-      supported_modalities: z.array(z.enum(["TEXT", "IMAGE", "AUDIO", "VIDEO"])).describe("Supported content modalities (defaults to TEXT if not provided)").optional(),
+      dimensionality: z.number().int().describe("Output vector dimensions (auto-inferred from model_identifier if omitted)").optional(),
+      distribution_type: z.enum(["DENSE", "SPARSE"]).describe("Type of embedding distribution (DENSE or SPARSE) (auto-inferred from model_identifier if omitted)").optional(),
+      max_sequence_length: z.number().int().describe("Maximum input sequence length (auto-inferred from model_identifier if omitted)").optional(),
+      supported_modalities: z.array(z.enum(["TEXT", "IMAGE", "AUDIO", "VIDEO"])).describe("Supported content modalities (defaults to TEXT if not provided) (auto-inferred from model_identifier if omitted)").optional(),
       credentials: z.object({
     kind: z.enum(["CREDENTIAL_KIND_UNSPECIFIED", "CREDENTIAL_KIND_API_KEY", "CREDENTIAL_KIND_GCP_ADC"]).describe("Selected credential strategy"),
     apiKey: z.any().describe("Configuration when kind is CREDENTIAL_KIND_API_KEY").optional(),
@@ -283,23 +1184,24 @@ function registerTools() {
       embedder_id: z.string().describe("Optional client-provided UUID for idempotent creation. If not provided, server generates a new UUID. Returns ALREADY_EXISTS if ID is already in use.").optional()
     },
     async (args) => {
+      const inferred = autoInferFromRegistry("embedders", args as Record<string, unknown>);
       const body: Record<string, unknown> = {};
-      if (args.display_name !== undefined) body["displayName"] = args.display_name;
-      if (args.description !== undefined) body["description"] = args.description;
-      if (args.provider_type !== undefined) body["providerType"] = args.provider_type;
-      if (args.endpoint_url !== undefined) body["endpointUrl"] = args.endpoint_url;
-      if (args.api_path !== undefined) body["apiPath"] = args.api_path;
-      if (args.model_identifier !== undefined) body["modelIdentifier"] = args.model_identifier;
-      if (args.dimensionality !== undefined) body["dimensionality"] = args.dimensionality;
-      if (args.distribution_type !== undefined) body["distributionType"] = args.distribution_type;
-      if (args.max_sequence_length !== undefined) body["maxSequenceLength"] = args.max_sequence_length;
-      if (args.supported_modalities !== undefined) body["supportedModalities"] = args.supported_modalities;
-      if (args.credentials !== undefined) body["credentials"] = args.credentials;
-      if (args.labels !== undefined) body["labels"] = args.labels;
-      if (args.version !== undefined) body["version"] = args.version;
-      if (args.monitoring_endpoint !== undefined) body["monitoringEndpoint"] = args.monitoring_endpoint;
-      if (args.owner_id !== undefined) body["ownerId"] = args.owner_id;
-      if (args.embedder_id !== undefined) body["embedderId"] = args.embedder_id;
+      if (inferred.display_name !== undefined) body["displayName"] = inferred.display_name;
+      if (inferred.description !== undefined) body["description"] = inferred.description;
+      if (inferred.provider_type !== undefined) body["providerType"] = inferred.provider_type;
+      if (inferred.endpoint_url !== undefined) body["endpointUrl"] = inferred.endpoint_url;
+      if (inferred.api_path !== undefined) body["apiPath"] = inferred.api_path;
+      if (inferred.model_identifier !== undefined) body["modelIdentifier"] = inferred.model_identifier;
+      if (inferred.dimensionality !== undefined) body["dimensionality"] = inferred.dimensionality;
+      if (inferred.distribution_type !== undefined) body["distributionType"] = inferred.distribution_type;
+      if (inferred.max_sequence_length !== undefined) body["maxSequenceLength"] = inferred.max_sequence_length;
+      if (inferred.supported_modalities !== undefined) body["supportedModalities"] = inferred.supported_modalities;
+      if (inferred.credentials !== undefined) body["credentials"] = inferred.credentials;
+      if (inferred.labels !== undefined) body["labels"] = inferred.labels;
+      if (inferred.version !== undefined) body["version"] = inferred.version;
+      if (inferred.monitoring_endpoint !== undefined) body["monitoringEndpoint"] = inferred.monitoring_endpoint;
+      if (inferred.owner_id !== undefined) body["ownerId"] = inferred.owner_id;
+      if (inferred.embedder_id !== undefined) body["embedderId"] = inferred.embedder_id;
       const result = await callApi("POST", `/v1/embedders`, body);
       return { content: [{ type: "text" as const, text: JSON.stringify(result, null, 2) }] };
     }
@@ -399,11 +1301,11 @@ function registerTools() {
     {
       display_name: z.string().describe("User-facing name of the LLM"),
       description: z.string().describe("Description of the LLM").optional(),
-      provider_type: z.enum(["OPENAI", "LITELLM_PROXY", "OPEN_ROUTER", "VLLM", "OLLAMA", "LLAMA_CPP", "CUSTOM_OPENAI_COMPATIBLE"]).describe("Type of LLM provider"),
-      endpoint_url: z.string().describe("API endpoint base URL (OpenAI-compatible base, typically ends with /v1)"),
+      provider_type: z.enum(["OPENAI", "LITELLM_PROXY", "OPEN_ROUTER", "VLLM", "OLLAMA", "LLAMA_CPP", "CUSTOM_OPENAI_COMPATIBLE"]).describe("Type of LLM provider (auto-inferred from model_identifier if omitted)").optional(),
+      endpoint_url: z.string().describe("API endpoint base URL (OpenAI-compatible base, typically ends with /v1) (auto-inferred from model_identifier if omitted)").optional(),
       api_path: z.string().describe("API path for chat/completions request (defaults to /chat/completions if not provided)").optional(),
       model_identifier: z.string().describe("Model identifier"),
-      supported_modalities: z.array(z.enum(["TEXT", "IMAGE", "AUDIO", "VIDEO"])).describe("Supported content modalities (defaults to TEXT if not provided)").optional(),
+      supported_modalities: z.array(z.enum(["TEXT", "IMAGE", "AUDIO", "VIDEO"])).describe("Supported content modalities (defaults to TEXT if not provided) (auto-inferred from model_identifier if omitted)").optional(),
       credentials: z.object({
     kind: z.enum(["CREDENTIAL_KIND_UNSPECIFIED", "CREDENTIAL_KIND_API_KEY", "CREDENTIAL_KIND_GCP_ADC"]).describe("Selected credential strategy"),
     apiKey: z.any().describe("Configuration when kind is CREDENTIAL_KIND_API_KEY").optional(),
@@ -436,24 +1338,25 @@ function registerTools() {
       llm_id: z.string().describe("Optional client-provided UUID for idempotent creation. If not provided, server generates a new UUID. Returns ALREADY_EXISTS if ID is already in use.").optional()
     },
     async (args) => {
+      const inferred = autoInferFromRegistry("llms", args as Record<string, unknown>);
       const body: Record<string, unknown> = {};
-      if (args.display_name !== undefined) body["displayName"] = args.display_name;
-      if (args.description !== undefined) body["description"] = args.description;
-      if (args.provider_type !== undefined) body["providerType"] = args.provider_type;
-      if (args.endpoint_url !== undefined) body["endpointUrl"] = args.endpoint_url;
-      if (args.api_path !== undefined) body["apiPath"] = args.api_path;
-      if (args.model_identifier !== undefined) body["modelIdentifier"] = args.model_identifier;
-      if (args.supported_modalities !== undefined) body["supportedModalities"] = args.supported_modalities;
-      if (args.credentials !== undefined) body["credentials"] = args.credentials;
-      if (args.labels !== undefined) body["labels"] = args.labels;
-      if (args.version !== undefined) body["version"] = args.version;
-      if (args.monitoring_endpoint !== undefined) body["monitoringEndpoint"] = args.monitoring_endpoint;
-      if (args.capabilities !== undefined) body["capabilities"] = args.capabilities;
-      if (args.default_sampling_params !== undefined) body["defaultSamplingParams"] = args.default_sampling_params;
-      if (args.max_context_length !== undefined) body["maxContextLength"] = args.max_context_length;
-      if (args.client_config !== undefined) body["clientConfig"] = args.client_config;
-      if (args.owner_id !== undefined) body["ownerId"] = args.owner_id;
-      if (args.llm_id !== undefined) body["llmId"] = args.llm_id;
+      if (inferred.display_name !== undefined) body["displayName"] = inferred.display_name;
+      if (inferred.description !== undefined) body["description"] = inferred.description;
+      if (inferred.provider_type !== undefined) body["providerType"] = inferred.provider_type;
+      if (inferred.endpoint_url !== undefined) body["endpointUrl"] = inferred.endpoint_url;
+      if (inferred.api_path !== undefined) body["apiPath"] = inferred.api_path;
+      if (inferred.model_identifier !== undefined) body["modelIdentifier"] = inferred.model_identifier;
+      if (inferred.supported_modalities !== undefined) body["supportedModalities"] = inferred.supported_modalities;
+      if (inferred.credentials !== undefined) body["credentials"] = inferred.credentials;
+      if (inferred.labels !== undefined) body["labels"] = inferred.labels;
+      if (inferred.version !== undefined) body["version"] = inferred.version;
+      if (inferred.monitoring_endpoint !== undefined) body["monitoringEndpoint"] = inferred.monitoring_endpoint;
+      if (inferred.capabilities !== undefined) body["capabilities"] = inferred.capabilities;
+      if (inferred.default_sampling_params !== undefined) body["defaultSamplingParams"] = inferred.default_sampling_params;
+      if (inferred.max_context_length !== undefined) body["maxContextLength"] = inferred.max_context_length;
+      if (inferred.client_config !== undefined) body["clientConfig"] = inferred.client_config;
+      if (inferred.owner_id !== undefined) body["ownerId"] = inferred.owner_id;
+      if (inferred.llm_id !== undefined) body["llmId"] = inferred.llm_id;
       const result = await callApi("POST", `/v1/llms`, body);
       return { content: [{ type: "text" as const, text: JSON.stringify(result, null, 2) }] };
     }
@@ -815,11 +1718,11 @@ function registerTools() {
     {
       display_name: z.string().describe("User-facing name of the reranker"),
       description: z.string().describe("Description of the reranker").optional(),
-      provider_type: z.enum(["OPENAI", "VLLM", "TEI", "LLAMA_CPP", "VOYAGE", "COHERE", "JINA"]).describe("Type of reranking provider"),
-      endpoint_url: z.string().describe("API endpoint URL"),
+      provider_type: z.enum(["OPENAI", "VLLM", "TEI", "LLAMA_CPP", "VOYAGE", "COHERE", "JINA"]).describe("Type of reranking provider (auto-inferred from model_identifier if omitted)").optional(),
+      endpoint_url: z.string().describe("API endpoint URL (auto-inferred from model_identifier if omitted)").optional(),
       api_path: z.string().describe("API path for reranking request (defaults: Cohere /v2/rerank, Jina /v1/rerank, others /rerank)").optional(),
       model_identifier: z.string().describe("Model identifier"),
-      supported_modalities: z.array(z.enum(["TEXT", "IMAGE", "AUDIO", "VIDEO"])).describe("Supported content modalities (defaults to TEXT if not provided)").optional(),
+      supported_modalities: z.array(z.enum(["TEXT", "IMAGE", "AUDIO", "VIDEO"])).describe("Supported content modalities (defaults to TEXT if not provided) (auto-inferred from model_identifier if omitted)").optional(),
       credentials: z.object({
     kind: z.enum(["CREDENTIAL_KIND_UNSPECIFIED", "CREDENTIAL_KIND_API_KEY", "CREDENTIAL_KIND_GCP_ADC"]).describe("Selected credential strategy"),
     apiKey: z.any().describe("Configuration when kind is CREDENTIAL_KIND_API_KEY").optional(),
@@ -833,20 +1736,21 @@ function registerTools() {
       reranker_id: z.string().describe("Optional client-provided UUID for idempotent creation. If not provided, server generates a new UUID. Returns ALREADY_EXISTS if ID is already in use.").optional()
     },
     async (args) => {
+      const inferred = autoInferFromRegistry("rerankers", args as Record<string, unknown>);
       const body: Record<string, unknown> = {};
-      if (args.display_name !== undefined) body["displayName"] = args.display_name;
-      if (args.description !== undefined) body["description"] = args.description;
-      if (args.provider_type !== undefined) body["providerType"] = args.provider_type;
-      if (args.endpoint_url !== undefined) body["endpointUrl"] = args.endpoint_url;
-      if (args.api_path !== undefined) body["apiPath"] = args.api_path;
-      if (args.model_identifier !== undefined) body["modelIdentifier"] = args.model_identifier;
-      if (args.supported_modalities !== undefined) body["supportedModalities"] = args.supported_modalities;
-      if (args.credentials !== undefined) body["credentials"] = args.credentials;
-      if (args.labels !== undefined) body["labels"] = args.labels;
-      if (args.version !== undefined) body["version"] = args.version;
-      if (args.monitoring_endpoint !== undefined) body["monitoringEndpoint"] = args.monitoring_endpoint;
-      if (args.owner_id !== undefined) body["ownerId"] = args.owner_id;
-      if (args.reranker_id !== undefined) body["rerankerId"] = args.reranker_id;
+      if (inferred.display_name !== undefined) body["displayName"] = inferred.display_name;
+      if (inferred.description !== undefined) body["description"] = inferred.description;
+      if (inferred.provider_type !== undefined) body["providerType"] = inferred.provider_type;
+      if (inferred.endpoint_url !== undefined) body["endpointUrl"] = inferred.endpoint_url;
+      if (inferred.api_path !== undefined) body["apiPath"] = inferred.api_path;
+      if (inferred.model_identifier !== undefined) body["modelIdentifier"] = inferred.model_identifier;
+      if (inferred.supported_modalities !== undefined) body["supportedModalities"] = inferred.supported_modalities;
+      if (inferred.credentials !== undefined) body["credentials"] = inferred.credentials;
+      if (inferred.labels !== undefined) body["labels"] = inferred.labels;
+      if (inferred.version !== undefined) body["version"] = inferred.version;
+      if (inferred.monitoring_endpoint !== undefined) body["monitoringEndpoint"] = inferred.monitoring_endpoint;
+      if (inferred.owner_id !== undefined) body["ownerId"] = inferred.owner_id;
+      if (inferred.reranker_id !== undefined) body["rerankerId"] = inferred.reranker_id;
       const result = await callApi("POST", `/v1/rerankers`, body);
       return { content: [{ type: "text" as const, text: JSON.stringify(result, null, 2) }] };
     }
