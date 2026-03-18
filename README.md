@@ -42,6 +42,10 @@ Just tell Claude your server details — it will call `goodmem_configure` automa
 
 Credentials persist for the session. You can reconfigure anytime to switch servers.
 
+## Reloading after updates
+
+After installing a new version or pulling the latest changes, run `/reload-plugins` inside Claude Code to pick up the updates without restarting.
+
 ## What's included
 
 | Component | Description |

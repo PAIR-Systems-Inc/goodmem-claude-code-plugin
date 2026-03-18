@@ -1,6 +1,6 @@
 {
   "name": "@pairsystems/goodmem-mcp",
-  "version": "0.1.2",
+  "version": "0.1.1",
   "description": "GoodMem MCP server \u2014 exposes GoodMem API as MCP tools",
   "type": "module",
   "main": "dist/index.js",
@@ -9,7 +9,8 @@
   },
   "files": [
     "dist/index.js",
-    "README.md"
+    "README.md",
+    "LICENSE"
   ],
   "scripts": {
     "build": "tsc && esbuild dist/index.js --bundle --platform=node --format=esm --outfile=dist/index.js --allow-overwrite",
