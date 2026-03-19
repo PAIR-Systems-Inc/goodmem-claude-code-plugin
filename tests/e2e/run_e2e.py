@@ -294,7 +294,7 @@ def _find_successful_result(
 # ---------------------------------------------------------------------------
 
 def main() -> None:
-    ap = argparse.ArgumentParser(description="GoodMem plugin E2E tests")
+    ap = argparse.ArgumentParser(description="GoodMem Claude plugin E2E tests")
     ap.add_argument("--debug", action="store_true", help="show raw output")
     ap.add_argument(
         "--discover", action="store_true",
