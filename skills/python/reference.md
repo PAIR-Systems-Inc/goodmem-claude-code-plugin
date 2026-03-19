@@ -34,7 +34,7 @@ Namespaces: `client.embedders`, `client.rerankers`, `client.llms`, `client.space
 
 ### client.embedders
 
-#### `embedders.create(**kwargs)`
+#### `embedders.create(display_name: str, model_identifier: str, api_key=None, api_path=None, credentials=None, description=None, dimensionality=None, distribution_type='DENSE', embedder_id=None, endpoint_url=None, labels=None, max_sequence_length=None, monitoring_endpoint=None, owner_id=None, provider_type=None, supported_modalities=None, version=None)`
 
 Create a new embedder
 
@@ -89,7 +89,7 @@ Parameters:
 
 ### client.rerankers
 
-#### `rerankers.create(**kwargs)`
+#### `rerankers.create(display_name: str, model_identifier: str, api_key=None, api_path=None, credentials=None, description=None, endpoint_url=None, labels=None, monitoring_endpoint=None, owner_id=None, provider_type=None, reranker_id=None, supported_modalities=None, version=None)`
 
 Create a new reranker
 
@@ -141,7 +141,7 @@ Parameters:
 
 ### client.llms
 
-#### `llms.create(**kwargs)`
+#### `llms.create(display_name: str, model_identifier: str, api_key=None, api_path=None, capabilities=None, client_config=None, credentials=None, default_sampling_params=None, description=None, endpoint_url=None, labels=None, llm_id=None, max_context_length=None, monitoring_endpoint=None, owner_id=None, provider_type=None, supported_modalities=None, version=None)`
 
 Create a new LLM
 
@@ -197,7 +197,7 @@ Parameters:
 
 ### client.spaces
 
-#### `spaces.create(**kwargs)`
+#### `spaces.create(name: str, space_embedders: list[SpaceEmbedderConfig], default_chunking_config=None, labels=None, owner_id=None, public_read=None, space_id=None)`
 
 Create a new Space
 
@@ -224,7 +224,7 @@ Get a space by ID
 Parameters:
 - id (str): The unique identifier of the space to retrieve
 
-#### `spaces.list(labels=None, **kwargs)`
+#### `spaces.list(labels=None, name_filter=None, owner_id=None, sort_by=None, sort_order=None, page_size=None, max_items=None, next_token=None)`
 
 List spaces
 
@@ -309,7 +309,7 @@ Parameters:
 - include_content (bool, optional, default=False): Whether to include the original content in the response (defaults to false). The snake_case alias include_content is also accepted.
 - include_processing_history (bool, optional, default=False): Whether to include background job processing history in the response (defaults to false). The snake_case alias include_processing_history is also accepted.
 
-#### `memories.list(space_id: str, **kwargs)`
+#### `memories.list(space_id: str, filter=None, include_content=None, include_processing_history=None, sort_by=None, sort_order=None, status_filter=None, page_size=None, max_items=None, next_token=None)`
 
 List memories in a space
 
@@ -347,7 +347,7 @@ Parameters:
 - dpi (int, optional): Optional rendition filter. If omitted, the unique page-image rendition for the page is returned; if multiple renditions exist, specify dpi and/or content_type.
 - content_type (str, optional): Optional rendition filter. MIME type of the desired page image, such as image/png. The snake_case alias content_type is also accepted.
 
-#### `memories.retrieve(message: str, stream=True, **kwargs)`
+#### `memories.retrieve(message: str, accept=None, chronological_resort=True, context=None, fetch_memory=True, fetch_memory_content=False, gen_token_budget=512, hnsw=None, llm_id=None, llm_temp=0.3, max_results=10, post_processor=None, prompt=None, relevance_threshold=None, requested_size=None, reranker_id=None, space_ids=None, space_keys=None, sys_prompt=None, stream=True)`
 
 Advanced semantic memory retrieval with JSON
 
