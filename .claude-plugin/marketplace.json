@@ -1,0 +1,14 @@
+{
+  "name": "goodmem-plugins",
+  "owner": {
+    "name": "PAIR Systems",
+    "email": "forrest@pairsys.ai"
+  },
+  "plugins": [
+    {
+      "name": "goodmem",
+      "source": "./",
+      "description": "GoodMem memory infrastructure for AI agents. Python SDK skills + MCP server for managing embedders, spaces, memories, and retrieval."
+    }
+  ]
+}

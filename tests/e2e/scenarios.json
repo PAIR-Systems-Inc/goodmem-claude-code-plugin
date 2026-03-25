@@ -1,0 +1,177 @@
+[
+  {
+    "name": "Pre-cleanup: delete stale resources",
+    "instruction": "List all GoodMem spaces. If you find one named \"E2E Test Space\", delete it. Then list all LLMs and delete any named \"E2E Test LLM\". Then list all embedders and delete any named \"E2E Test Embedder\". Say what you cleaned up or \"nothing to clean up\".",
+    "expect": {
+      "tool": "goodmem_spaces_list"
+    }
+  },
+  {
+    "name": "Get system info",
+    "instruction": "Get GoodMem system information",
+    "expect": {
+      "tool": "goodmem_system_info",
+      "response": {
+        "version": "*",
+        "major": "*",
+        "minor": "*",
+        "patch": "*",
+        "buildTime": "*",
+        "gitDescribe": "*"
+      }
+    }
+  },
+  {
+    "name": "Lookup known embedder model",
+    "instruction": "Look up the model text-embedding-3-large in the GoodMem model registry",
+    "expect": {
+      "tool": "goodmem_lookup_model",
+      "args": {
+        "model_identifier": "text-embedding-3-large"
+      },
+      "response": {
+        "model_identifier": "text-embedding-3-large",
+        "providerType": "OPENAI",
+        "maxSequenceLength": 8192,
+        "endpointUrl": "https://api.openai.com/v1"
+      }
+    }
+  },
+  {
+    "name": "Lookup known LLM model",
+    "instruction": "Look up the model gpt-4o in the GoodMem model registry",
+    "expect": {
+      "tool": "goodmem_lookup_model",
+      "args": {
+        "model_identifier": "gpt-4o"
+      },
+      "response": {
+        "model_identifier": "gpt-4o",
+        "providerType": "OPENAI",
+        "maxContextLength": 128000,
+        "endpointUrl": "https://api.openai.com/v1"
+      }
+    }
+  },
+  {
+    "name": "Get current user",
+    "instruction": "Get my current GoodMem user information",
+    "expect": {
+      "tool": "goodmem_users_me",
+      "response": {
+        "userId": "*",
+        "email": "*",
+        "displayName": "*",
+        "username": "*",
+        "createdAt": "*",
+        "updatedAt": "*"
+      }
+    }
+  },
+  {
+    "name": "RAG 1: Create embedder",
+    "instruction": "Create a GoodMem embedder called \"E2E Test Embedder\" using the model text-embedding-3-large with OpenAI API key $OPENAI_API_KEY",
+    "expect": {
+      "tool": "goodmem_embedders_create",
+      "args": {
+        "model_identifier": "text-embedding-3-large"
+      },
+      "response": {
+        "embedderId": "*",
+        "displayName": "E2E Test Embedder",
+        "providerType": "OPENAI",
+        "endpointUrl": "https://api.openai.com/v1",
+        "apiPath": "/embeddings",
+        "modelIdentifier": "text-embedding-3-large",
+        "dimensionality": 1536,
+        "distributionType": "DENSE"
+      }
+    }
+  },
+  {
+    "name": "RAG 2: Create LLM",
+    "instruction": "Create a GoodMem LLM called \"E2E Test LLM\" using model gpt-4o with OpenAI API key $OPENAI_API_KEY",
+    "expect": {
+      "tool": "goodmem_llms_create",
+      "args": {
+        "model_identifier": "gpt-4o"
+      },
+      "response": {
+        "llmId": "*",
+        "displayName": "E2E Test LLM",
+        "providerType": "OPENAI",
+        "endpointUrl": "https://api.openai.com/v1",
+        "apiPath": "/chat/completions",
+        "modelIdentifier": "gpt-4o"
+      }
+    }
+  },
+  {
+    "name": "RAG 3: Create space",
+    "instruction": "Create a GoodMem space called \"E2E Test Space\" using the embedder named \"E2E Test Embedder\"",
+    "expect": {
+      "tool": "goodmem_spaces_create",
+      "response": {
+        "spaceId": "*",
+        "name": "E2E Test Space",
+        "spaceEmbedders": "*"
+      }
+    }
+  },
+  {
+    "name": "RAG 4: Ingest text memory",
+    "instruction": "Create a text memory in the GoodMem space named \"E2E Test Space\" with this content: \"Transformers are a type of neural network architecture that are particularly well-suited for natural language processing tasks. A Transformer model leverages the attention mechanism to capture long-range dependencies in the input sequence.\"",
+    "expect": {
+      "tool": "goodmem_memories_create",
+      "response": {
+        "memoryId": "*",
+        "spaceId": "*",
+        "contentType": "text/plain",
+        "processingStatus": "PENDING",
+        "pageImageCount": 0
+      }
+    }
+  },
+  {
+    "name": "RAG 5: Check memory processing status",
+    "instruction": "List the memories in the GoodMem space named \"E2E Test Space\" and tell me the processing status of each memory.",
+    "expect": {
+      "tool": "goodmem_memories_list"
+    }
+  },
+  {
+    "name": "RAG 6: Retrieve with query",
+    "instruction": "Search the GoodMem space named \"E2E Test Space\" with the query \"What are Transformers?\" and return up to 5 results",
+    "expect": {
+      "tool": "goodmem_memories_retrieve"
+    }
+  },
+  {
+    "name": "RAG 7: List memories in space",
+    "instruction": "List all memories in the GoodMem space named \"E2E Test Space\"",
+    "expect": {
+      "tool": "goodmem_memories_list"
+    }
+  },
+  {
+    "name": "Cleanup: delete space (cascades to memories)",
+    "instruction": "Find the GoodMem space named \"E2E Test Space\" and delete it",
+    "expect": {
+      "tool": "goodmem_spaces_delete"
+    }
+  },
+  {
+    "name": "Cleanup: delete LLM",
+    "instruction": "Find the GoodMem LLM named \"E2E Test LLM\" and delete it",
+    "expect": {
+      "tool": "goodmem_llms_delete"
+    }
+  },
+  {
+    "name": "Cleanup: delete embedder",
+    "instruction": "Find the GoodMem embedder named \"E2E Test Embedder\" and delete it",
+    "expect": {
+      "tool": "goodmem_embedders_delete"
+    }
+  }
+]
