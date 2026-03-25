@@ -7,13 +7,22 @@
 
 set -euo pipefail
 
-# Must run from the repo root for git subtree to work.
-REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
-cd "${REPO_ROOT}"
-
+# git subtree must run from the repo toplevel.
+REPO_ROOT="$(git rev-parse --show-toplevel 2>/dev/null || true)"
 SUBTREE_PREFIX="clients/v2/claude"
 REMOTE="goodmem-plugin"
 BRANCH="main"
+
+if [ -z "${REPO_ROOT}" ] || [ "$(pwd)" != "${REPO_ROOT}" ]; then
+    echo "ERROR: git subtree requires running from the repo root."
+    echo ""
+    echo "Run these commands:"
+    echo ""
+    echo "  cd ${REPO_ROOT:-<repo-root>}"
+    echo "  git subtree push --prefix=${SUBTREE_PREFIX} ${REMOTE} ${BRANCH}"
+    echo ""
+    exit 1
+fi
 
 usage() {
     cat <<'EOF'

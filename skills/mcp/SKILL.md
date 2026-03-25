@@ -20,7 +20,7 @@ The GoodMem MCP server exposes tools across 10 namespaces. Each tool maps direct
 2. **Register providers** — create embedder, LLM, and optionally reranker. Use `goodmem_lookup_model` to check the model registry before creating — it auto-infers provider, endpoint, and dimensionality for known models.
 3. **Create a space** — a space binds an embedder and chunking config. Memories ingested into a space are automatically chunked and embedded.
 4. **Ingest memories** — use `goodmem_memories_create` (single) or `goodmem_memories_batch_create` (bulk). Supports text, base64-encoded files, or URL references.
-5. **Wait for processing** — after ingestion, memories are processed asynchronously. Poll with `goodmem_memories_get` until `status` is `ACTIVE`.
+5. **Wait for processing** — after ingestion, memories are processed asynchronously. Poll with `goodmem_memories_get` until `processingStatus` is `COMPLETED`.
 6. **Retrieve** — `goodmem_memories_retrieve` performs semantic search. Returns NDJSON with ranked results.
 
 ---
