@@ -83,3 +83,4 @@ CRUD: `create`, `list`, `update`, `delete`.
 ### Utilities
 - `goodmem_configure` — set base URL and API key from chat
 - `goodmem_lookup_model` — look up model registry entries before creating embedders/LLMs/rerankers
+- `goodmem_client_info` — return MCP client version and the goodmem server commit it was built against
