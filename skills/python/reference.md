@@ -53,11 +53,11 @@ Parameters:
 - `distribution_type` (DistributionType, optional, default="DENSE"): The distribution type of the embedder's vector output. Defaults to `"DENSE"` when not specified.
 - `embedder_id` (str, optional): Optional client-provided UUID for idempotent creation. If not provided, server generates a new UUID. Returns ALREADY_EXISTS if ID is already in use.
 - `endpoint_url` (str, optional): Base URL for the embedding endpoint. Auto-inferred from `provider_type` for known providers.
-- `labels` (dict, optional): User-defined labels for categorization
+- `labels` (dict[str, str], optional): User-defined labels for categorization
 - `max_sequence_length` (int, optional): Maximum token length accepted by the model. Auto-inferred from `model_identifier` for known models; required when `model_identifier` is not in the ...
 - `monitoring_endpoint` (str, optional): Monitoring endpoint URL
 - `owner_id` (str, optional): Optional owner ID. If not provided, derived from the authentication context. Requires CREATE_EMBEDDER_ANY permission if specified.
-- `provider_type` (ProviderType, optional): Provider backend (e.g. `"OPENAI"`, `"COHERE"`, `"VLLM"`, `"TEI"`). Auto-inferred from `model_identifier` for known models.
+- `provider_type` (ProviderType, optional): Provider backend — one of `"OPENAI"`, `"COHERE"`, `"VOYAGE"`, `"JINA"`, `"VLLM"`, `"TEI"`, `"LLAMA_CPP"`. Use `"OPENAI"` for OpenAI-compatible endp...
 - `supported_modalities` (list[Modality], optional): Modalities supported by this embedder (e.g. `["TEXT"]`). Auto-inferred from `model_identifier` for known models; required when `model_identifier` i...
 - `version` (str, optional): Version information
 
@@ -66,9 +66,9 @@ Parameters:
 Get an embedder by ID
 
 Parameters:
-- `id` (str): The unique identifier of the embedder to retrieve
+- `id` (str): The UUID of the embedder to retrieve
 
-#### `embedders.list(labels=None, owner_id=None, provider_type=None) -> list[EmbedderResponse]`
+#### `embedders.list(labels=None, owner_id=None, provider_type=None) -> ListEmbeddersResponse`
 
 List embedders
 
@@ -90,7 +90,7 @@ Parameters:
 Delete an embedder
 
 Parameters:
-- `id` (str): The unique identifier of the embedder to delete
+- `id` (str): The UUID of the embedder to delete
 
 ### client.rerankers
 
@@ -106,7 +106,7 @@ Parameters:
 - `credentials` (EndpointAuthentication, optional): Structured credential payload describing how to authenticate with the provider.
 - `description` (str, optional): Description of the reranker
 - `endpoint_url` (str, optional): Base URL for the reranking endpoint. Auto-inferred from `provider_type` for known providers; required when `model_identifier` is not in the registry.
-- `labels` (dict, optional): User-defined labels for categorization
+- `labels` (dict[str, str], optional): User-defined labels for categorization
 - `monitoring_endpoint` (str, optional): Monitoring endpoint URL
 - `owner_id` (str, optional): Optional owner ID. If not provided, derived from the authentication context. Requires CREATE_RERANKER_ANY permission if specified.
 - `provider_type` (ProviderType, optional): Provider backend (e.g. `"COHERE"`, `"JINA"`). Auto-inferred from `model_identifier` for known models; required when `model_identifier` is not in th...
@@ -119,9 +119,9 @@ Parameters:
 Get a reranker by ID
 
 Parameters:
-- `id` (str): The unique identifier of the reranker to retrieve
+- `id` (str): The UUID of the reranker to retrieve
 
-#### `rerankers.list(labels=None, owner_id=None, provider_type=None) -> list[RerankerResponse]`
+#### `rerankers.list(labels=None, owner_id=None, provider_type=None) -> ListRerankersResponse`
 
 List rerankers
 
@@ -143,7 +143,7 @@ Parameters:
 Delete a reranker
 
 Parameters:
-- `id` (str): The unique identifier of the reranker to delete
+- `id` (str): The UUID of the reranker to delete
 
 ### client.llms
 
@@ -157,17 +157,17 @@ Parameters:
 - `api_key` (str, optional): Converts a plain API key string to the full `EndpointAuthentication` structure (i.e. `{"kind": "CREDENTIAL_KIND_API_KEY", "api_key": {"inline_secre...
 - `api_path` (str, optional): API path for chat/completions request (defaults to `/chat/completions` if not provided).
 - `capabilities` (LLMCapabilities, optional): LLM capabilities defining supported features and modes. Optional — server infers capabilities from model identifier if not provided.
-- `client_config` (dict, optional): Provider-specific client configuration as flexible JSON structure
+- `client_config` (dict[str, Any], optional): Provider-specific client configuration as flexible JSON structure
 - `credentials` (EndpointAuthentication, optional): Structured credential payload describing how to authenticate with the provider.
 - `default_sampling_params` (LLMSamplingParams, optional): Default sampling parameters for generation requests
 - `description` (str, optional): Description of the LLM
 - `endpoint_url` (str, optional): Base URL for the LLM endpoint (OpenAI-compatible base, typically ends with `/v1`). Auto-inferred from `provider_type` for known providers; required...
-- `labels` (dict, optional): User-defined labels for categorization
+- `labels` (dict[str, str], optional): User-defined labels for categorization
 - `llm_id` (str, optional): Optional client-provided UUID for idempotent creation. If not provided, server generates a new UUID. Returns ALREADY_EXISTS if ID is already in use.
 - `max_context_length` (int, optional): Maximum context window size in tokens. Auto-inferred from `model_identifier` for known models; recommended when `model_identifier` is not in the re...
 - `monitoring_endpoint` (str, optional): Monitoring endpoint URL
 - `owner_id` (str, optional): Optional owner ID. If not provided, derived from the authentication context. Requires CREATE_LLM_ANY permission if specified.
-- `provider_type` (LLMProviderType, optional): Provider backend (e.g. `"OPENAI"`, `"VLLM"`). Auto-inferred from `model_identifier` for known models; required when `model_identifier` is not in th...
+- `provider_type` (LLMProviderType, optional): Provider backend — one of `"OPENAI"`, `"LITELLM_PROXY"`, `"OPEN_ROUTER"`, `"VLLM"`, `"OLLAMA"`, `"LLAMA_CPP"`, `"CUSTOM_OPENAI_COMPATIBLE"`. Use `"...
 - `supported_modalities` (list[Modality], optional): Modalities supported by this LLM (e.g. `["TEXT"]`). Auto-inferred from `model_identifier` for known models; defaults to `["TEXT"]` on the server if...
 - `version` (str, optional): Version information
 
@@ -176,9 +176,9 @@ Parameters:
 Get an LLM by ID
 
 Parameters:
-- `id` (str): The unique identifier of the LLM to retrieve
+- `id` (str): The UUID of the LLM to retrieve
 
-#### `llms.list(labels=None, owner_id=None, provider_type=None) -> list[LLMResponse]`
+#### `llms.list(labels=None, owner_id=None, provider_type=None) -> ListLLMsResponse`
 
 List LLMs
 
@@ -200,7 +200,7 @@ Parameters:
 Delete an LLM
 
 Parameters:
-- `id` (str): The unique identifier of the LLM to delete
+- `id` (str): The UUID of the LLM to delete
 
 ### client.spaces
 
@@ -212,7 +212,7 @@ Parameters:
 - `name` (str): The desired name for the space. Must be unique within the user's scope.
 - `space_embedders` (list[SpaceEmbedderConfig]): List of embedder configurations to associate with this space. Each specifies an embedder ID and a relative default retrieval weight used when no pe...
 - `default_chunking_config` (ChunkingConfiguration, optional): If omitted, the SDK applies recursive chunking with `chunk_size=512`, `chunk_overlap=64`, `keep_strategy="KEEP_END"`, `length_measurement="CHARACTE...
-- `labels` (dict, optional): A set of key-value pairs to categorize or tag the space. Used for filtering and organizational purposes.
+- `labels` (dict[str, str], optional): A set of key-value pairs to categorize or tag the space. Used for filtering and organizational purposes.
 - `owner_id` (str, optional): Optional owner ID. If not provided, derived from the authentication context. Requires CREATE_SPACE_ANY permission if specified.
 - `public_read` (bool, optional): Indicates if the space and its memories can be read by unauthenticated users or users other than the owner. Defaults to false.
 - `space_id` (str, optional): Optional client-provided UUID for idempotent creation. If not provided, server generates a new UUID. Returns ALREADY_EXISTS if ID is already in use.
@@ -222,7 +222,7 @@ Parameters:
 Get a space by ID
 
 Parameters:
-- `id` (str): The unique identifier of the space to retrieve
+- `id` (str): The UUID of the space to retrieve
 
 #### `spaces.list(labels=None, name_filter=None, owner_id=None, sort_by=None, sort_order=None, page_size=None, max_items=None, next_token=None) -> Page[Space]`
 
@@ -251,7 +251,7 @@ Parameters:
 Delete a space
 
 Parameters:
-- `id` (str): The unique identifier of the space to delete
+- `id` (str): The UUID of the space to delete
 
 ### client.memories
 
@@ -265,7 +265,7 @@ Parameters:
 - `content_type` (str, optional): MIME type of the content. Auto-inferred as `"text/plain"` for `original_content`, or from the file extension for `file_path`. Required when using `...
 - `extract_page_images` (bool, optional): Optional hint to extract page images for eligible document types (for example, PDFs)
 - `memory_id` (str, optional): Optional client-provided UUID for the memory. If omitted, the server generates one. Returns ALREADY_EXISTS if the ID is already in use.
-- `metadata` (dict, optional): Metadata for the memory. Any JSON string. Can be nested. Can be used for filtering in memory list operation. (e.g. `{"author": "John Doe", "tags": ...
+- `metadata` (dict[str, Any], optional): Metadata for the memory. Any JSON-serializable dict. Can be nested. Can be used for filtering in memory list operation. (e.g. `{"author": "John Doe...
 - `original_content` (str, optional): Original content as plain text. Mutually exclusive with `file_path` and `original_content_b64`.
 - `original_content_b64` (str, optional): Original content as base64-encoded binary data. Mutually exclusive with `file_path` and `original_content`.
 - `original_content_ref` (str, optional): Reference to external content location. Functions as a metadata field. Does not make Goodmem download the content from the URL and use it to create...
@@ -301,7 +301,7 @@ Parameters:
 Get a memory by ID
 
 Parameters:
-- `id` (str): The unique identifier of the memory to retrieve
+- `id` (str): The UUID of the memory to retrieve
 - `include_content` (bool, optional): Whether to include the original content in the response (defaults to false). The snake_case alias include_content is also accepted.
 - `include_processing_history` (bool, optional): Whether to include background job processing history in the response (defaults to false). The snake_case alias include_processing_history is also a...
 
@@ -310,7 +310,7 @@ Parameters:
 Download memory content
 
 Parameters:
-- `id` (str): The unique identifier of the memory to download
+- `id` (str): The UUID of the memory to download
 
 #### `memories.pages(id: str, content_type=None, dpi=None, end_page_index=None, max_results=None, next_token=None, start_page_index=None) -> Page[MemoryPageImage]`
 
@@ -340,7 +340,7 @@ Parameters:
 List memories in a space
 
 Parameters:
-- `space_id` (str): The unique identifier of the space containing the memories
+- `space_id` (str): The UUID of the space containing the memories
 - `filter` (str, optional): Metadata filter expression for list results. See [Metadata Filters Guide](../../../../how-to/metadata-filters) and [Filter Expressions Reference](....
 - `include_content` (bool, optional): Whether to include the original content in the response (defaults to false). The snake_case alias include_content is also accepted.
 - `include_processing_history` (bool, optional): Whether to include background job processing history in the response (defaults to false). The snake_case alias include_processing_history is also a...
@@ -356,7 +356,7 @@ Parameters:
 Delete a memory
 
 Parameters:
-- `id` (str): The unique identifier of the memory to delete
+- `id` (str): The UUID of the memory to delete
 
 #### `memories.batch_create(requests: list[MemoryCreationRequest]) -> BatchMemoryResponse`
 
@@ -453,7 +453,7 @@ Create a new API key
 Parameters:
 - `api_key_id` (str, optional): Optional client-provided UUID for idempotent creation. If not provided, server generates a new UUID. Returns ALREADY_EXISTS if ID is already in use.
 - `expires_at` (int, optional): Expiration timestamp in milliseconds since epoch. If not provided, the key does not expire.
-- `labels` (dict, optional): Key-value pairs of metadata associated with the API key. Used for organization and filtering.
+- `labels` (dict[str, str], optional): Key-value pairs of metadata associated with the API key. Used for organization and filtering.
 
 #### `apikeys.list() -> list[ApiKeyResponse]`
 
@@ -472,7 +472,7 @@ Parameters:
 Delete an API key
 
 Parameters:
-- `id` (str): The unique identifier of the API key to delete
+- `id` (str): The UUID of the API key to delete
 
 ## Convenience shortcuts
 

@@ -28,7 +28,7 @@ The GoodMem MCP server exposes tools across 10 namespaces. Each tool maps direct
 ## Namespaces
 
 ### Embedders (`goodmem_embedders_*`)
-Register and manage embedding models. SaaS providers (OpenAI, Cohere, Voyage, Jina, Anthropic, Google, Mistral) require `credentials`. Omitting credentials for a known SaaS endpoint throws an error before the request is sent.
+Register and manage embedding models. The four SaaS provider types (OpenAI, Cohere, Voyage, Jina) require `credentials`. OpenAI-compatible endpoints (Anthropic, Google, Mistral) also require credentials when used under the `OPENAI` provider type. Omitting credentials for a known SaaS endpoint throws an error before the request is sent.
 
 CRUD: `create`, `list`, `get`, `update`, `delete`.
 
