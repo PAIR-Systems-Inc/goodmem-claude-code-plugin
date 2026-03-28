@@ -32,6 +32,10 @@ Constructor parameters:
 - `verify` (bool | str, default True): SSL certificate verification. Pass `False` to skip, or a file path to a CA bundle. Mutually exclusive with `http_client`.
 - `http_client` (httpx.Client): Pre-configured httpx client with base URL and auth headers. Mutually exclusive with all other params.
 
+Package metadata:
+- `goodmem.__version__` — SDK package version (e.g., `"0.1.5"`)
+- `goodmem.__based_on_goodmem_commit__` — GoodMem server commit hash this SDK was generated from. Useful for debugging version mismatches between SDK and server.
+
 ## API Reference
 
 Namespaces: `client.embedders`, `client.rerankers`, `client.llms`, `client.spaces`, `client.memories`, `client.ocr`, `client.system`, `client.users`, `client.admin`, `client.apikeys`
@@ -210,7 +214,7 @@ Create a new Space
 
 Parameters:
 - `name` (str): The desired name for the space. Must be unique within the user's scope.
-- `space_embedders` (list[SpaceEmbedderConfig]): List of embedder configurations to associate with this space. Each specifies an embedder ID and a relative default retrieval weight used when no pe...
+- `space_embedders` (list[SpaceEmbedderConfig]): List of embedder configurations to associate with this space. At least one embedder configuration is required. Each specifies an embedder ID and a ...
 - `default_chunking_config` (ChunkingConfiguration, optional, default={'recursive': {'chunkSize': 512, 'chunkOverlap': 64, 'keepStrategy': 'KEEP_END', 'lengthMeasurement': 'CHARACTER_COUNT'}}): Default strategy to chunk any memory ingested into this space. Can be overriden by per-memory chunking strategy.
 - `labels` (dict[str, str], optional): A set of key-value pairs to categorize or tag the space. Used for filtering and organizational purposes.
 - `owner_id` (str, optional): Optional owner ID. If not provided, derived from the authentication context. Requires CREATE_SPACE_ANY permission if specified.
@@ -271,7 +275,7 @@ Parameters:
 - `original_content_ref` (str, optional): Reference to external content location. Functions as a metadata field. Does not make Goodmem download the content from the URL and use it to create...
 - `file_path` (str, optional): Path to a local file to upload. Mutually exclusive with `original_content` and `original_content_b64`.
 
-#### `memories.retrieve(message: str, chronological_resort=True, context=None, fetch_memory=True, fetch_memory_content=False, gen_token_budget=512, hnsw=None, llm_id=None, llm_temp=0.3, max_results=10, post_processor=None, prompt=None, relevance_threshold=None, requested_size=None, reranker_id=None, space_ids=None, space_keys=None, sys_prompt=None, stream=True) -> RetrieveMemoryStream | list[RetrieveMemoryEvent]`
+#### `memories.retrieve(message: str, chronological_resort=True, context=None, fetch_memory=None, fetch_memory_content=None, gen_token_budget=512, hnsw=None, llm_id=None, llm_temp=0.3, max_results=10, post_processor=None, prompt=None, relevance_threshold=None, requested_size=None, reranker_id=None, space_ids=None, space_keys=None, sys_prompt=None, stream=True) -> RetrieveMemoryStream | list[RetrieveMemoryEvent]`
 
 Advanced semantic memory retrieval with JSON
 
@@ -279,8 +283,8 @@ Parameters:
 - `message` (str): Primary query/message for semantic search.
 - `chronological_resort` (bool, optional, default=True): Re-sort retrieved memories chronologically after semantic ranking. Only applies when `llm_id` or `reranker_id` is set.
 - `context` (list[ContextItem], optional): Optional context items (text or binary) to provide additional context for the search.
-- `fetch_memory` (bool, optional, default=True): If `True` (default), memory definition events are streamed. Set to `False` to skip them.
-- `fetch_memory_content` (bool, optional, default=False): If `True`, includes the raw content of each memory in the response. Only applicable when `fetch_memory` is `True`.
+- `fetch_memory` (bool, optional): If `True`, memory definition events are streamed. Set to `False` to skip them.
+- `fetch_memory_content` (bool, optional): If `True`, includes the raw content of each memory in the response. Only applicable when `fetch_memory` is `True`.
 - `gen_token_budget` (int, optional, default=512): Token budget for LLM post-processing. Must be positive. If the token budget is insufficient, the server will return an error. Only applies when `ll...
 - `hnsw` (HnswOptions, optional): Optional request-level HNSW tuning overrides. Advanced usage; available on POST retrieve.
 - `llm_id` (str, optional): The ID of the LLM to process the retrieved memories, e.g., RAG. Assembles the nested `PostProcessor` structure automatically. If unset, no LLM will...
