@@ -76,6 +76,7 @@
       "args": {
         "model_identifier": "text-embedding-3-large"
       },
+      "allow_conflict": true,
       "response": {
         "embedderId": "*",
         "displayName": "E2E Test Embedder",
@@ -96,6 +97,7 @@
       "args": {
         "model_identifier": "gpt-4o"
       },
+      "allow_conflict": true,
       "response": {
         "llmId": "*",
         "displayName": "E2E Test LLM",
@@ -111,6 +113,7 @@
     "instruction": "Create a GoodMem space called \"E2E Test Space\" using the embedder named \"E2E Test Embedder\"",
     "expect": {
       "tool": "goodmem_spaces_create",
+      "allow_conflict": true,
       "response": {
         "spaceId": "*",
         "name": "E2E Test Space",

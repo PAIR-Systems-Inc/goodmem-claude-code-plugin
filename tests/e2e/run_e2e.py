@@ -246,13 +246,26 @@ def check_assertions(parsed: dict, expect: dict) -> list[str]:
             )
 
     # Check response fields: find a successful result from ANY matching call.
-    # If no successful result (e.g. 409 conflict), skip response assertions
-    # — mirrors the Python SDK integration tests which pytest.skip on 409.
+    # Only tolerate missing results when allow_conflict is set (409 = already exists).
     expected_response = expect.get("response", {})
+    allow_conflict = expect.get("allow_conflict", False)
     if expected_response:
         result_json = _find_successful_result(matching_calls, results)
         if result_json is None:
-            pass  # skip response checks — resource may already exist (409)
+            if allow_conflict:
+                pass  # 409 conflict is OK — resource already exists
+            else:
+                # Tool was called but returned an error — this is a failure
+                error_results = [
+                    r for r in results
+                    if r["tool_use_id"] in {c["id"] for c in matching_calls}
+                    and r.get("is_error")
+                ]
+                if error_results:
+                    err_text = str(error_results[0].get("content", ""))[:200]
+                    failures.append(f"Tool '{expected_tool}' returned error: {err_text}")
+                else:
+                    failures.append(f"Tool '{expected_tool}' returned no parseable result")
         else:
             for key, expected_val in expected_response.items():
                 actual = _resolve_field(result_json, key)
@@ -337,9 +350,21 @@ def main() -> None:
 
     print(f"Running {len(cases)} scenario(s)...\n")
     passed = failed = skipped = 0
+    # Track chain failures: if a scenario in a dependency chain fails,
+    # all subsequent scenarios in the same chain are skipped.
+    # Chain names are derived from the scenario name prefix (e.g., "RAG").
+    failed_chains: set[str] = set()
 
     for case in cases:
-        print(f"  {case['name']} ... ", end="", flush=True)
+        name = case["name"]
+        print(f"  {name} ... ", end="", flush=True)
+
+        # Check if this scenario belongs to a failed chain
+        chain = name.split(":")[0].strip() if ":" in name else ""
+        if chain and chain in failed_chains:
+            print(f"SKIP (prior {chain} step failed)")
+            skipped += 1
+            continue
 
         try:
             instruction = substitute_env_vars(case["instruction"])
@@ -383,6 +408,8 @@ def main() -> None:
             if stderr:
                 print(f"    {stderr[:200]}")
             failed += 1
+            if chain:
+                failed_chains.add(chain)
             continue
 
         expect = case.get("expect")
@@ -397,6 +424,8 @@ def main() -> None:
             for f in failures:
                 print(f"    - {f}")
             failed += 1
+            if chain:
+                failed_chains.add(chain)
         else:
             print("OK")
             passed += 1
