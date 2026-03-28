@@ -68,7 +68,7 @@ Get an embedder by ID
 Parameters:
 - `id` (str): The UUID of the embedder to retrieve
 
-#### `embedders.list(labels=None, owner_id=None, provider_type=None) -> ListEmbeddersResponse`
+#### `embedders.list(labels=None, owner_id=None, provider_type=None) -> list[EmbedderResponse]`
 
 List embedders
 
@@ -121,7 +121,7 @@ Get a reranker by ID
 Parameters:
 - `id` (str): The UUID of the reranker to retrieve
 
-#### `rerankers.list(labels=None, owner_id=None, provider_type=None) -> ListRerankersResponse`
+#### `rerankers.list(labels=None, owner_id=None, provider_type=None) -> list[RerankerResponse]`
 
 List rerankers
 
@@ -178,7 +178,7 @@ Get an LLM by ID
 Parameters:
 - `id` (str): The UUID of the LLM to retrieve
 
-#### `llms.list(labels=None, owner_id=None, provider_type=None) -> ListLLMsResponse`
+#### `llms.list(labels=None, owner_id=None, provider_type=None) -> list[LLMResponse]`
 
 List LLMs
 
@@ -204,14 +204,14 @@ Parameters:
 
 ### client.spaces
 
-#### `spaces.create(name: str, space_embedders: list[SpaceEmbedderConfig], default_chunking_config=None, labels=None, owner_id=None, public_read=False, space_id=None) -> Space`
+#### `spaces.create(name: str, space_embedders: list[SpaceEmbedderConfig], default_chunking_config={'recursive': {'chunkSize': 512, 'chunkOverlap': 64, 'keepStrategy': 'KEEP_END', 'lengthMeasurement': 'CHARACTER_COUNT'}}, labels=None, owner_id=None, public_read=None, space_id=None) -> Space`
 
 Create a new Space
 
 Parameters:
 - `name` (str): The desired name for the space. Must be unique within the user's scope.
 - `space_embedders` (list[SpaceEmbedderConfig]): List of embedder configurations to associate with this space. Each specifies an embedder ID and a relative default retrieval weight used when no pe...
-- `default_chunking_config` (ChunkingConfiguration, optional): If omitted, the SDK applies recursive chunking with `chunk_size=512`, `chunk_overlap=64`, `keep_strategy="KEEP_END"`, `length_measurement="CHARACTE...
+- `default_chunking_config` (ChunkingConfiguration, optional, default={'recursive': {'chunkSize': 512, 'chunkOverlap': 64, 'keepStrategy': 'KEEP_END', 'lengthMeasurement': 'CHARACTER_COUNT'}}): Default strategy to chunk any memory ingested into this space. Can be overriden by per-memory chunking strategy.
 - `labels` (dict[str, str], optional): A set of key-value pairs to categorize or tag the space. Used for filtering and organizational purposes.
 - `owner_id` (str, optional): Optional owner ID. If not provided, derived from the authentication context. Requires CREATE_SPACE_ANY permission if specified.
 - `public_read` (bool, optional): Indicates if the space and its memories can be read by unauthenticated users or users other than the owner. Defaults to false.
@@ -235,7 +235,7 @@ Parameters:
 - `sort_by` (str, optional): Field to sort by: `'created_time'`, `'updated_time'`, or `'name'` (default: `'created_time'`). Unsupported values return INVALID_ARGUMENT.
 - `sort_order` (SortOrder, optional): Sort order (`ASCENDING` or `DESCENDING`, default: `DESCENDING`).
 - `page_size` (int, optional): Number of results per page.
-- `max_items` (int, optional): Maximum total items to return across all pages.
+- `max_items` (int, optional): Total number of items to return across all pages.
 - `next_token` (str, optional): Opaque pagination token to resume from a previous page's `next_token`.
 
 #### `spaces.update(id: str, request: UpdateSpaceRequest | dict) -> Space`
@@ -296,7 +296,7 @@ Parameters:
 - `sys_prompt` (str, optional): System prompt for LLM post-processing. If unset, the server's default system prompt is used. Only applies when `llm_id` is set.
 - `stream` (bool, optional, default=True): If True (default), returns a streaming context manager. If False, returns a list.
 
-#### `memories.get(id: str, include_content=False, include_processing_history=False) -> Memory`
+#### `memories.get(id: str, include_content=None, include_processing_history=None) -> Memory`
 
 Get a memory by ID
 
@@ -335,7 +335,7 @@ Parameters:
 - `content_type` (str, optional): Optional rendition filter. MIME type of the desired page image, such as image/png. The snake_case alias content_type is also accepted.
 - `dpi` (int, optional): Optional rendition filter. If omitted, the unique page-image rendition for the page is returned; if multiple renditions exist, specify dpi and/or c...
 
-#### `memories.list(space_id: str, filter=None, include_content=False, include_processing_history=False, sort_by=None, sort_order=None, status_filter=None, page_size=None, max_items=None, next_token=None) -> Page[Memory]`
+#### `memories.list(space_id: str, filter=None, include_content=None, include_processing_history=None, sort_by=None, sort_order=None, status_filter=None, page_size=None, max_items=None, next_token=None) -> Page[Memory]`
 
 List memories in a space
 
@@ -348,7 +348,7 @@ Parameters:
 - `sort_order` (SortOrder, optional): Sort direction (ASCENDING or DESCENDING). The snake_case alias sort_order is also accepted.
 - `status_filter` (str, optional): Filter memories by processing status (PENDING, PROCESSING, COMPLETED, FAILED). The snake_case alias status_filter is also accepted.
 - `page_size` (int, optional): Number of results per page.
-- `max_items` (int, optional): Maximum total items to return across all pages.
+- `max_items` (int, optional): Total number of items to return across all pages.
 - `next_token` (str, optional): Opaque pagination token to resume from a previous page's `next_token`.
 
 #### `memories.delete(id: str) -> None`
@@ -430,14 +430,14 @@ Parameters:
 - `timeout_sec` (int, optional): Maximum seconds to wait for the server to quiesce before returning.
 - `wait_for_quiesce` (bool, optional): If true, wait for in-flight requests to complete and the server to reach QUIESCED before responding.
 
-#### `admin.background_jobs.purge(dry_run=None, limit=None, older_than=None, statuses=None) -> AdminPurgeJobsResponse`
+#### `admin.background_jobs.purge(older_than: str, dry_run=None, limit=None, statuses=None) -> AdminPurgeJobsResponse`
 
 Purge completed background jobs
 
 Parameters:
+- `older_than` (str): ISO-8601 timestamp cutoff; only terminal jobs older than this instant are eligible.
 - `dry_run` (bool, optional): If true, report purge counts without deleting any rows.
 - `limit` (int, optional): Maximum number of jobs to purge in this request.
-- `older_than` (str, optional): ISO-8601 timestamp cutoff; only terminal jobs older than this instant are eligible.
 - `statuses` (list[str], optional): Optional terminal background job statuses to target for purging.
 
 #### `admin.license.reload() -> AdminReloadLicenseResponse`

@@ -314,6 +314,8 @@ class TestMcpRagWorkflow:
                     "recursive": {
                         "chunkSize": 512,
                         "chunkOverlap": 50,
+                        "keepStrategy": "KEEP_END",
+                        "lengthMeasurement": "CHARACTER_COUNT",
                     },
                 },
             })
