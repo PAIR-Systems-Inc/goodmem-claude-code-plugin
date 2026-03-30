@@ -6,7 +6,7 @@ allowed-tools: Read
 
 # GoodMem MCP Tools — Workflow Guide
 
-The GoodMem MCP server exposes tools across 10 namespaces. Each tool maps directly to a GoodMem REST API endpoint. Use `tools/list` to discover exact parameter schemas — this document covers workflow and patterns only.
+The GoodMem MCP server exposes tools across 10 namespaces plus 3 local utilities. Most tools map to a GoodMem REST API endpoint; the utilities (`goodmem_configure`, `goodmem_lookup_model`, `goodmem_client_info`) run locally without contacting the server. Use `tools/list` to discover exact parameter schemas — this document covers workflow and patterns only.
 
 **Setup**: The MCP server needs `GOODMEM_BASE_URL` and `GOODMEM_API_KEY`. These can be set as environment variables before launch, or configured from chat via `goodmem_configure`.
 
@@ -55,7 +55,7 @@ Store, retrieve, and manage memories within spaces.
 - `get` / `batch_get` — fetch by ID
 - `list` — list memories in a space
 - `delete` / `batch_delete` — remove memories
-- `pages` — get page metadata for a processed document
+- `pages` — list memory page images with optional filters and pagination
 
 *Not available via MCP (binary response)*: `content`, `pages_image`.
 
