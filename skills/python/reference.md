@@ -70,14 +70,14 @@ Parameters:
 Get an embedder by ID
 
 Parameters:
-- `id` (str): The UUID of the embedder to retrieve
+- `id` (str): The unique identifier of the embedder to retrieve
 
-#### `embedders.list(labels=None, owner_id=None, provider_type=None) -> list[EmbedderResponse]`
+#### `embedders.list(label=None, owner_id=None, provider_type=None) -> list[EmbedderResponse]`
 
 List embedders
 
 Parameters:
-- `labels` (dict[str, str], optional): Filters to match embedders by labels attached via create/update. You can verify these labels in `EmbedderResponse.labels`. Example: `labels={"env":...
+- `label` (dict[str, str], optional): Filter by label key-value pairs. Label filters accept either label.<key>=<value> or label[key]=value (for example, label.environment=production or ...
 - `owner_id` (str, optional): Filter embedders by owner ID. With LIST_EMBEDDER_ANY permission, omitting this shows all accessible embedders; providing it filters by that owner. ...
 - `provider_type` (ProviderType, optional): Filter embedders by provider type. Allowed values match the ProviderType schema.
 
@@ -94,7 +94,7 @@ Parameters:
 Delete an embedder
 
 Parameters:
-- `id` (str): The UUID of the embedder to delete
+- `id` (str): The unique identifier of the embedder to delete
 
 ### client.rerankers
 
@@ -123,14 +123,14 @@ Parameters:
 Get a reranker by ID
 
 Parameters:
-- `id` (str): The UUID of the reranker to retrieve
+- `id` (str): The unique identifier of the reranker to retrieve
 
-#### `rerankers.list(labels=None, owner_id=None, provider_type=None) -> list[RerankerResponse]`
+#### `rerankers.list(label=None, owner_id=None, provider_type=None) -> list[RerankerResponse]`
 
 List rerankers
 
 Parameters:
-- `labels` (dict[str, str], optional): Filters to match rerankers by labels attached via create/update. You can verify these labels in `RerankerResponse.labels`. Example: `labels={"env":...
+- `label` (dict[str, str], optional): Filter by label key-value pairs. Label filters accept either label.<key>=<value> or label[key]=value (for example, label.environment=production or ...
 - `owner_id` (str, optional): Filter rerankers by owner ID. With LIST_RERANKER_ANY permission, omitting this shows all accessible rerankers; providing it filters by that owner. ...
 - `provider_type` (ProviderType, optional): Filter rerankers by provider type. Allowed values match the ProviderType schema.
 
@@ -147,7 +147,7 @@ Parameters:
 Delete a reranker
 
 Parameters:
-- `id` (str): The UUID of the reranker to delete
+- `id` (str): The unique identifier of the reranker to delete
 
 ### client.llms
 
@@ -180,14 +180,14 @@ Parameters:
 Get an LLM by ID
 
 Parameters:
-- `id` (str): The UUID of the LLM to retrieve
+- `id` (str): The unique identifier of the LLM to retrieve
 
-#### `llms.list(labels=None, owner_id=None, provider_type=None) -> list[LLMResponse]`
+#### `llms.list(label=None, owner_id=None, provider_type=None) -> list[LLMResponse]`
 
 List LLMs
 
 Parameters:
-- `labels` (dict[str, str], optional): Filters to match LLMs by labels attached via create/update. You can verify these labels in `LLMResponse.labels`. Example: `labels={"env":"prod", "t...
+- `label` (dict[str, str], optional): Filter by label key-value pairs. Label filters accept either label.<key>=<value> or label[key]=value (for example, label.environment=production or ...
 - `owner_id` (str, optional): Filter LLMs by owner ID. With LIST_LLM_ANY permission, omitting this shows all accessible LLMs; providing it filters by that owner. With LIST_LLM_O...
 - `provider_type` (LLMProviderType, optional): Filter LLMs by provider type. Allowed values match the LLMProviderType schema.
 
@@ -204,7 +204,7 @@ Parameters:
 Delete an LLM
 
 Parameters:
-- `id` (str): The UUID of the LLM to delete
+- `id` (str): The unique identifier of the LLM to delete
 
 ### client.spaces
 
@@ -226,14 +226,14 @@ Parameters:
 Get a space by ID
 
 Parameters:
-- `id` (str): The UUID of the space to retrieve
+- `id` (str): The unique identifier of the space to retrieve
 
-#### `spaces.list(labels=None, name_filter=None, owner_id=None, sort_by=None, sort_order=None, page_size=None, max_items=None, next_token=None) -> Page[Space]`
+#### `spaces.list(label=None, name_filter=None, owner_id=None, sort_by=None, sort_order=None, page_size=None, max_items=None, next_token=None) -> Page[Space]`
 
 List spaces
 
 Parameters:
-- `labels` (dict[str, str], optional): Filters to match spaces by labels attached via create/update. You can verify these labels in `Space.labels`. Example: `labels={"env":"prod", "team"...
+- `label` (dict[str, str], optional): Filter by label key-value pairs. Label filters accept either label.<key>=<value> or label[key]=value (for example, label.environment=production or ...
 - `name_filter` (str, optional): Filter spaces by name using glob pattern matching.
 - `owner_id` (str, optional): Filter spaces by owner ID. With LIST_SPACE_ANY permission and ownerId omitted, returns all visible spaces. Otherwise returns caller-owned spaces on...
 - `sort_by` (str, optional): Field to sort by: `'created_time'`, `'updated_time'`, or `'name'` (default: `'created_time'`). Unsupported values return INVALID_ARGUMENT.
@@ -255,7 +255,7 @@ Parameters:
 Delete a space
 
 Parameters:
-- `id` (str): The UUID of the space to delete
+- `id` (str): The unique identifier of the space to delete
 
 ### client.memories
 
@@ -306,8 +306,8 @@ Get a memory by ID
 
 Parameters:
 - `id` (str): The UUID of the memory to retrieve
-- `include_content` (bool, optional): Whether to include the original content in the response (defaults to false). The snake_case alias include_content is also accepted.
-- `include_processing_history` (bool, optional): Whether to include background job processing history in the response (defaults to false). The snake_case alias include_processing_history is also a...
+- `include_content` (bool, optional): Whether to include the original content in the response (defaults to false).
+- `include_processing_history` (bool, optional): Whether to include background job processing history in the response (defaults to false).
 
 #### `memories.content(id: str) -> bytes`
 
@@ -322,12 +322,12 @@ List memory page images
 
 Parameters:
 - `id` (str): Memory UUID
-- `content_type` (str, optional): Optional rendition filter for page-image MIME type, such as image/png. The snake_case alias content_type is also accepted.
+- `content_type` (str, optional): Optional rendition filter for page-image MIME type, such as image/png.
 - `dpi` (int, optional): Optional rendition filter for page-image DPI.
-- `end_page_index` (int, optional): Optional upper bound for returned page indices, inclusive. The snake_case alias end_page_index is also accepted.
-- `max_results` (int, optional): Maximum number of results per page. The snake_case alias max_results is also accepted.
-- `next_token` (str, optional): Opaque pagination token for the next page. The snake_case alias next_token is also accepted. Do not parse or construct it.
-- `start_page_index` (int, optional): Optional lower bound for returned page indices, inclusive. The snake_case alias start_page_index is also accepted.
+- `end_page_index` (int, optional): Optional upper bound for returned page indices, inclusive.
+- `max_results` (int, optional): Maximum number of results per page.
+- `next_token` (str, optional): Opaque pagination token for the next page. Do not parse or construct it.
+- `start_page_index` (int, optional): Optional lower bound for returned page indices, inclusive.
 
 #### `memories.pages_image(id: str, page_index: int, content_type=None, dpi=None) -> bytes`
 
@@ -336,7 +336,7 @@ Download memory page image content
 Parameters:
 - `id` (str): Memory UUID
 - `page_index` (int): 0-based page index
-- `content_type` (str, optional): Optional rendition filter. MIME type of the desired page image, such as image/png. The snake_case alias content_type is also accepted.
+- `content_type` (str, optional): Optional rendition filter. MIME type of the desired page image, such as image/png.
 - `dpi` (int, optional): Optional rendition filter. If omitted, the unique page-image rendition for the page is returned; if multiple renditions exist, specify dpi and/or c...
 
 #### `memories.list(space_id: str, filter=None, include_content=None, include_processing_history=None, sort_by=None, sort_order=None, status_filter=None, page_size=None, max_items=None, next_token=None) -> Page[Memory]`
@@ -346,11 +346,11 @@ List memories in a space
 Parameters:
 - `space_id` (str): The UUID of the space containing the memories
 - `filter` (str, optional): Metadata filter expression for list results. See [Metadata Filters Guide](../../../../how-to/metadata-filters) and [Filter Expressions Reference](....
-- `include_content` (bool, optional): Whether to include the original content in the response (defaults to false). The snake_case alias include_content is also accepted.
-- `include_processing_history` (bool, optional): Whether to include background job processing history in the response (defaults to false). The snake_case alias include_processing_history is also a...
-- `sort_by` (str, optional): Field to sort by (e.g., 'created_at'). The snake_case alias sort_by is also accepted.
-- `sort_order` (SortOrder, optional): Sort direction (ASCENDING or DESCENDING). The snake_case alias sort_order is also accepted.
-- `status_filter` (str, optional): Filter memories by processing status (PENDING, PROCESSING, COMPLETED, FAILED). The snake_case alias status_filter is also accepted.
+- `include_content` (bool, optional): Whether to include the original content in the response (defaults to false).
+- `include_processing_history` (bool, optional): Whether to include background job processing history in the response (defaults to false).
+- `sort_by` (str, optional): Field to sort by (e.g., 'created_at').
+- `sort_order` (SortOrder, optional): Sort direction (ASCENDING or DESCENDING).
+- `status_filter` (str, optional): Filter memories by processing status (PENDING, PROCESSING, COMPLETED, FAILED).
 - `page_size` (int, optional): Number of results per page.
 - `max_items` (int, optional): Total number of items to return across all pages.
 - `next_token` (str, optional): Opaque pagination token to resume from a previous page's `next_token`.
@@ -387,13 +387,14 @@ Parameters:
 
 ### client.ocr
 
-#### `ocr.document(content: str, end_page=None, format=None, include_markdown=None, include_raw_json=None, start_page=None) -> OcrDocumentResponse`
+#### `ocr.document(content=None, end_page=None, file_path=None, format=None, include_markdown=None, include_raw_json=None, start_page=None) -> OcrDocumentResponse`
 
 Run OCR on a document or image
 
 Parameters:
-- `content` (str): Base64-encoded document bytes
+- `content` (str, optional): Base64-encoded document bytes. Mutually exclusive with `file_path`.
 - `end_page` (int, optional): 0-based inclusive end page
+- `file_path` (str, optional): Path to a local file to OCR. Mutually exclusive with `content`.
 - `format` (OcrInputFormat, optional): Input format hint (AUTO, PDF, TIFF, PNG, JPEG, BMP)
 - `include_markdown` (bool, optional): Include markdown rendering in the response
 - `include_raw_json` (bool, optional): Include raw OCR JSON payload in the response
@@ -499,6 +500,7 @@ The SDK provides convenience parameters that simplify common patterns.
 - **`memories.retrieve()`**: `prompt` -> `post_processor.config.prompt` — Custom prompt for LLM post-processing. If unset, the server's default prompt is used. Only applies when `llm_id` is set.
 - **`memories.retrieve()`**: `sys_prompt` -> `post_processor.config.sys_prompt` — System prompt for LLM post-processing. If unset, the server's default system prompt is used. Only applies when `llm_id` is set.
 - **`memories.retrieve()`**: `chronological_resort` -> `post_processor.config.chronological_resort` — Re-sort retrieved memories chronologically after semantic ranking. Defaults to true on the server. Only applies when `llm_id` or `reranker_id` is set.
+- **`ocr.document()`**: `file_path` — Path to a local file to OCR. Mutually exclusive with `content`.
 - **`rerankers.create()`**: `api_key` -> `credentials` — Converts a plain API key string to the full `EndpointAuthentication` structure (i.e. `{"kind": "CREDENTIAL_KIND_API_KEY", "api_key": {"inline_secret": "sk-..."}}`).
 - **`spaces.list()`**: `page_size` -> `max_results` — Number of results per page (defaults to 50, clamped to [1, 1000] by the server).
 - **`spaces.list()`**: `max_items` — Maximum total number of items to return across all pages.
