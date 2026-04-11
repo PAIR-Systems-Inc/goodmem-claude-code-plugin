@@ -389,13 +389,137 @@ class TestMcpAutoInference:
     """Test model registry auto-inference in MCP tools."""
 
     def test_lookup_known_model(self, mcp_session: McpSession):
-        """Looking up a known model should return its registry entry."""
+        """Looking up a known model should return its registry entry.
+
+        NOTE: The output uses snake_case keys (``provider_type``) so agents
+        can copy the result directly into a goodmem_embedders_create call.
+        """
         resp = mcp_session.call_tool("goodmem_lookup_model", {
             "model_identifier": "text-embedding-3-large",
         })
         data = _tool_result(resp)
-        assert data["providerType"] == "OPENAI"
+        assert data["provider_type"] == "OPENAI"
         assert data["type"] == "embedder"
+
+    def test_lookup_model_output_is_snake_case(self, mcp_session: McpSession):
+        """All keys in the lookup response must be snake_case so they match
+        the create-tool Zod schemas. A silent camelCase leak (e.g.
+        ``providerType``) is the exact bug that caused issue 2: the agent
+        would copy the output into goodmem_embedders_create and the
+        camelCase keys would be dropped by Zod.
+        """
+        resp = mcp_session.call_tool("goodmem_lookup_model", {
+            "model_identifier": "text-embedding-3-large",
+        })
+        data = _tool_result(resp)
+        assert isinstance(data, dict)
+        bad_keys = [k for k in data.keys() if any(c.isupper() for c in k)]
+        assert not bad_keys, (
+            f"goodmem_lookup_model output must be entirely snake_case. "
+            f"Found camelCase keys: {bad_keys}. These would be silently "
+            f"dropped if fed into goodmem_embedders_create."
+        )
+        # Spot-check the key fields agents need to build a create call.
+        for k in ("model_identifier", "type", "provider_type", "endpoint_url"):
+            assert k in data, f"Missing expected snake_case key: {k}"
+
+    def test_lookup_then_create_chain(self, mcp_session: McpSession):
+        """Simulate the LLM agent copy-paste workflow: call lookup_model,
+        pass the returned fields directly as kwargs to embedders_create.
+
+        This is the high-level integration test that would have caught
+        issue 2 (lookup returning camelCase keys that were silently
+        dropped by create).
+        """
+        openai_key = os.environ.get("OPENAI_API_KEY")
+        if not openai_key:
+            pytest.skip("OPENAI_API_KEY not set")
+
+        lookup_resp = mcp_session.call_tool("goodmem_lookup_model", {
+            "model_identifier": "text-embedding-3-large",
+        })
+        lookup = _tool_result(lookup_resp)
+
+        # Build create args from the lookup output, adding only the
+        # required identity and credential fields. This mirrors how an
+        # LLM agent would actually use the tools.
+        create_args: dict = {
+            "display_name": "MCP Lookup→Create Chain Test",
+            "model_identifier": "text-embedding-3-large",
+            "credentials": {
+                "kind": "CREDENTIAL_KIND_API_KEY",
+                "apiKey": {"inlineSecret": openai_key},
+            },
+        }
+        # Copy every snake_case field from lookup (skipping `type`, which
+        # is meta).
+        for k, v in lookup.items():
+            if k in ("type", "model_identifier", "display_name"):
+                continue
+            if v is None:
+                continue
+            create_args.setdefault(k, v)
+
+        embedder_id = None
+        try:
+            resp = mcp_session.call_tool("goodmem_embedders_create", create_args)
+            embedder = _tool_result(resp)
+            embedder_id = embedder["embedderId"]
+            # Wire format is camelCase on the server response.
+            assert embedder["providerType"] == "OPENAI"
+            assert embedder["endpointUrl"] == "https://api.openai.com/v1"
+            assert embedder["modelIdentifier"] == "text-embedding-3-large"
+        finally:
+            if embedder_id:
+                mcp_session.call_tool(
+                    "goodmem_embedders_delete", {"id": embedder_id}
+                )
+
+    def test_create_space_with_empty_embedders_fails_client_side(
+        self, mcp_session: McpSession
+    ):
+        """Zod's .min(1) on space_embedders must reject an empty array
+        client-side (before the request hits the server).
+        """
+        resp = mcp_session.call_tool("goodmem_spaces_create", {
+            "name": "MCP Empty Embedders Test",
+            "space_embedders": [],
+            "default_chunking_config": {
+                "recursive": {
+                    "chunkSize": 512,
+                    "chunkOverlap": 50,
+                    "keepStrategy": "KEEP_END",
+                    "lengthMeasurement": "CHARACTER_COUNT",
+                },
+            },
+        })
+        # Either a JSON-RPC error or isError=true tool result is acceptable.
+        result = resp.get("result", {})
+        is_error = result.get("isError", False) or "error" in resp
+        assert is_error, (
+            f"Expected client-side validation error for empty "
+            f"space_embedders, got success response: {resp}"
+        )
+        # Extract any error text for inspection
+        error_text = ""
+        if "error" in resp:
+            error_text = str(resp["error"])
+        else:
+            content = result.get("content", [])
+            if content:
+                error_text = str(content[0].get("text", ""))
+        # The error should reference the minimum constraint OR "too_small"
+        # (Zod's default error code for arrays violating .min()).
+        lowered = error_text.lower()
+        assert (
+            "at least" in lowered
+            or "too_small" in lowered
+            or "minimum" in lowered
+            or "min" in lowered
+        ), (
+            f"Expected an empty-array validation error mentioning the "
+            f"minimum, got: {error_text[:500]}"
+        )
 
     def test_lookup_unknown_model(self, mcp_session: McpSession):
         """Looking up an unknown model should list available models."""

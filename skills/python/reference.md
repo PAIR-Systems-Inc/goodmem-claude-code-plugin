@@ -104,7 +104,7 @@ Create a new reranker
 
 Parameters:
 - `display_name` (str): User-facing name of the reranker
-- `model_identifier` (str): When a known model, auto-fills `provider_type`, `endpoint_url`, and `supported_modalities` for 16 registered models.
+- `model_identifier` (str): When a known model, auto-fills `provider_type`, `endpoint_url`, and `supported_modalities`.
 - `api_key` (str, optional): Converts a plain API key string to the full `EndpointAuthentication` structure (i.e. `{"kind": "CREDENTIAL_KIND_API_KEY", "api_key": {"inline_secre...
 - `api_path` (str, optional): API path for reranking request (defaults: Cohere `/v2/rerank`, Jina `/v1/rerank`, others `/rerank`).
 - `credentials` (EndpointAuthentication, optional): Structured credential payload describing how to authenticate with the provider.
@@ -157,7 +157,7 @@ Create a new LLM
 
 Parameters:
 - `display_name` (str): User-facing name of the LLM
-- `model_identifier` (str): When a known model, auto-fills `provider_type`, `endpoint_url`, `max_context_length`, and `supported_modalities` for 34 registered models.
+- `model_identifier` (str): When a known model, auto-fills `provider_type`, `endpoint_url`, `max_context_length`, and `supported_modalities`.
 - `api_key` (str, optional): Converts a plain API key string to the full `EndpointAuthentication` structure (i.e. `{"kind": "CREDENTIAL_KIND_API_KEY", "api_key": {"inline_secre...
 - `api_path` (str, optional): API path for chat/completions request (defaults to `/chat/completions` if not provided).
 - `capabilities` (LLMCapabilities, optional): LLM capabilities defining supported features and modes. Optional — server infers capabilities from model identifier if not provided.
@@ -275,7 +275,7 @@ Parameters:
 - `original_content_ref` (str, optional): Reference to external content location. Functions as a metadata field. Does not make Goodmem download the content from the URL and use it to create...
 - `file_path` (str, optional): Path to a local file to upload. Mutually exclusive with `original_content` and `original_content_b64`.
 
-#### `memories.retrieve(message: str, chronological_resort=None, context=None, fetch_memory=None, fetch_memory_content=None, gen_token_budget=None, hnsw=None, llm_id=None, llm_temp=None, max_results=None, post_processor=None, prompt=None, relevance_threshold=None, requested_size=None, reranker_id=None, space_ids=None, space_keys=None, sys_prompt=None, stream=True) -> RetrieveMemoryStream | list[RetrieveMemoryEvent]`
+#### `memories.retrieve(message: str, chronological_resort=None, context=None, fetch_memory=None, fetch_memory_content=None, gen_token_budget=None, hnsw=None, llm_id=None, llm_temp=None, logging=None, max_results=None, post_processor=None, prompt=None, relevance_threshold=None, requested_size=None, reranker_id=None, space_ids=None, space_keys=None, sys_prompt=None, stream=True) -> RetrieveMemoryStream | list[RetrieveMemoryEvent]`
 
 Advanced semantic memory retrieval with JSON
 
@@ -289,6 +289,7 @@ Parameters:
 - `hnsw` (HnswOptions, optional): Optional request-level HNSW tuning overrides. Advanced usage; available on POST retrieve.
 - `llm_id` (str, optional): The ID of the LLM to process the retrieved memories, e.g., RAG. Assembles the nested `PostProcessor` structure automatically. If unset, no LLM will...
 - `llm_temp` (float, optional): LLM temperature for post-processing. Valid range is 0.0-2.0. Defaults to 0.3 on the server. Only applies when `llm_id` is set.
+- `logging` (LoggingOptions, optional): Optional durable request logging block for POST retrieve requests. Supply logging.enabled=true to opt in, and optionally attach flat scalar logging...
 - `max_results` (int, optional): Maximum number of retrieved memories to return. Must be positive. Defaults to 10 on the server. Only applies when `llm_id` or `reranker_id` is set.
 - `post_processor` (PostProcessor, optional): Optional post-processor configuration to transform retrieval results.
 - `prompt` (str, optional): Custom prompt for LLM post-processing. If unset, the server's default prompt is used. Only applies when `llm_id` is set.

@@ -31,9 +31,9 @@
       },
       "response": {
         "model_identifier": "text-embedding-3-large",
-        "providerType": "OPENAI",
-        "maxSequenceLength": 8192,
-        "endpointUrl": "https://api.openai.com/v1"
+        "provider_type": "OPENAI",
+        "max_sequence_length": 8192,
+        "endpoint_url": "https://api.openai.com/v1"
       }
     }
   },
@@ -47,9 +47,23 @@
       },
       "response": {
         "model_identifier": "gpt-4o",
+        "provider_type": "OPENAI",
+        "max_context_length": 128000,
+        "endpoint_url": "https://api.openai.com/v1"
+      }
+    }
+  },
+  {
+    "name": "Lookup chain: lookup then create embedder",
+    "instruction": "First, look up the model text-embedding-3-small in the GoodMem registry. Then create a GoodMem embedder called \"E2E Lookup Chain Embedder\" using the fields returned by the lookup (provider_type, endpoint_url, dimensionality, etc.) and the OpenAI API key $OPENAI_API_KEY. Then delete the embedder you just created.",
+    "expect": {
+      "tool": "goodmem_embedders_create",
+      "allow_conflict": true,
+      "response": {
+        "embedderId": "*",
         "providerType": "OPENAI",
-        "maxContextLength": 128000,
-        "endpointUrl": "https://api.openai.com/v1"
+        "endpointUrl": "https://api.openai.com/v1",
+        "modelIdentifier": "text-embedding-3-small"
       }
     }
   },
