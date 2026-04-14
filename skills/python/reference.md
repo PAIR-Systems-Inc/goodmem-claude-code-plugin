@@ -51,16 +51,16 @@ Parameters:
 - `model_identifier` (str): The string that identifies the embedder. Usually the model identifier assigned by HuggingFace or the LLM provider, e.g., `"text-embedding-3-small"`...
 - `api_key` (str, optional): Converts a plain API key string to the full `EndpointAuthentication` structure (i.e. `{"kind": "CREDENTIAL_KIND_API_KEY", "api_key": {"inline_secre...
 - `api_path` (str, optional): API path for embeddings request (defaults: Cohere /v2/embed, TEI /embed, others /embeddings)
-- `credentials` (EndpointAuthentication, optional): Structured credential payload describing how to authenticate with the provider.
+- `credentials` (EndpointAuthentication, optional): Structured credential payload describing how to authenticate with the provider. Required for SaaS providers; optional for local or proxy providers.
 - `description` (str, optional): Description of the embedder
 - `dimensionality` (int, optional): Output vector dimensions. Auto-inferred from `model_identifier` for known models (using `dimensions.default` from the model registry); required whe...
 - `distribution_type` (DistributionType, optional, default="DENSE"): The distribution type of the embedder's vector output. Defaults to `"DENSE"` when not specified.
-- `embedder_id` (str, optional): Optional client-provided UUID for idempotent creation. If not provided, server generates a new UUID. Returns ALREADY_EXISTS if ID is already in use.
+- `embedder_id` (str · uuid, optional): Optional client-provided UUID for idempotent creation. If not provided, server generates a new UUID. Returns ALREADY_EXISTS if ID is already in use.
 - `endpoint_url` (str, optional): Base URL for the embedding endpoint. Auto-inferred from `provider_type` for known providers.
 - `labels` (dict[str, str], optional): User-defined labels for categorization
 - `max_sequence_length` (int, optional): Maximum token length accepted by the model. Auto-inferred from `model_identifier` for known models; required when `model_identifier` is not in the ...
 - `monitoring_endpoint` (str, optional): Monitoring endpoint URL
-- `owner_id` (str, optional): Optional owner ID. If not provided, derived from the authentication context. Requires CREATE_EMBEDDER_ANY permission if specified.
+- `owner_id` (str · uuid, optional): Optional owner ID. If not provided, derived from the authentication context. Requires CREATE_EMBEDDER_ANY permission if specified.
 - `provider_type` (ProviderType, optional): Provider backend — one of `"OPENAI"`, `"COHERE"`, `"VOYAGE"`, `"JINA"`, `"VLLM"`, `"TEI"`, `"LLAMA_CPP"`. Use `"OPENAI"` for OpenAI-compatible endp...
 - `supported_modalities` (list[Modality], optional): Modalities supported by this embedder (e.g. `["TEXT"]`). Auto-inferred from `model_identifier` for known models; required when `model_identifier` i...
 - `version` (str, optional): Version information
@@ -107,14 +107,14 @@ Parameters:
 - `model_identifier` (str): When a known model, auto-fills `provider_type`, `endpoint_url`, and `supported_modalities`.
 - `api_key` (str, optional): Converts a plain API key string to the full `EndpointAuthentication` structure (i.e. `{"kind": "CREDENTIAL_KIND_API_KEY", "api_key": {"inline_secre...
 - `api_path` (str, optional): API path for reranking request (defaults: Cohere `/v2/rerank`, Jina `/v1/rerank`, others `/rerank`).
-- `credentials` (EndpointAuthentication, optional): Structured credential payload describing how to authenticate with the provider.
+- `credentials` (EndpointAuthentication, optional): Structured credential payload describing how to authenticate with the provider. Required for SaaS providers; optional for local or proxy providers.
 - `description` (str, optional): Description of the reranker
 - `endpoint_url` (str, optional): Base URL for the reranking endpoint. Auto-inferred from `provider_type` for known providers; required when `model_identifier` is not in the registry.
 - `labels` (dict[str, str], optional): User-defined labels for categorization
 - `monitoring_endpoint` (str, optional): Monitoring endpoint URL
-- `owner_id` (str, optional): Optional owner ID. If not provided, derived from the authentication context. Requires CREATE_RERANKER_ANY permission if specified.
+- `owner_id` (str · uuid, optional): Optional owner ID. If not provided, derived from the authentication context. Requires CREATE_RERANKER_ANY permission if specified.
 - `provider_type` (ProviderType, optional): Provider backend (e.g. `"COHERE"`, `"JINA"`). Auto-inferred from `model_identifier` for known models; required when `model_identifier` is not in th...
-- `reranker_id` (str, optional): Optional client-provided UUID for idempotent creation. If not provided, server generates a new UUID. Returns ALREADY_EXISTS if ID is already in use.
+- `reranker_id` (str · uuid, optional): Optional client-provided UUID for idempotent creation. If not provided, server generates a new UUID. Returns ALREADY_EXISTS if ID is already in use.
 - `supported_modalities` (list[Modality], optional): Modalities supported by this reranker (e.g. `["TEXT"]`). Auto-inferred from `model_identifier` for known models; defaults to `["TEXT"]` on the serv...
 - `version` (str, optional): Version information
 
@@ -162,15 +162,15 @@ Parameters:
 - `api_path` (str, optional): API path for chat/completions request (defaults to `/chat/completions` if not provided).
 - `capabilities` (LLMCapabilities, optional): LLM capabilities defining supported features and modes. Optional — server infers capabilities from model identifier if not provided.
 - `client_config` (dict[str, Any], optional): Provider-specific client configuration as flexible JSON structure
-- `credentials` (EndpointAuthentication, optional): Structured credential payload describing how to authenticate with the provider.
+- `credentials` (EndpointAuthentication, optional): Structured credential payload describing how to authenticate with the provider. Required for SaaS providers; optional for local or proxy providers.
 - `default_sampling_params` (LLMSamplingParams, optional): Default sampling parameters for generation requests
 - `description` (str, optional): Description of the LLM
 - `endpoint_url` (str, optional): Base URL for the LLM endpoint (OpenAI-compatible base, typically ends with `/v1`). Auto-inferred from `provider_type` for known providers; required...
 - `labels` (dict[str, str], optional): User-defined labels for categorization
-- `llm_id` (str, optional): Optional client-provided UUID for idempotent creation. If not provided, server generates a new UUID. Returns ALREADY_EXISTS if ID is already in use.
+- `llm_id` (str · uuid, optional): Optional client-provided UUID for idempotent creation. If not provided, server generates a new UUID. Returns ALREADY_EXISTS if ID is already in use.
 - `max_context_length` (int, optional): Maximum context window size in tokens. Auto-inferred from `model_identifier` for known models; recommended when `model_identifier` is not in the re...
 - `monitoring_endpoint` (str, optional): Monitoring endpoint URL
-- `owner_id` (str, optional): Optional owner ID. If not provided, derived from the authentication context. Requires CREATE_LLM_ANY permission if specified.
+- `owner_id` (str · uuid, optional): Optional owner ID. If not provided, derived from the authentication context. Requires CREATE_LLM_ANY permission if specified.
 - `provider_type` (LLMProviderType, optional): Provider backend — one of `"OPENAI"`, `"LITELLM_PROXY"`, `"OPEN_ROUTER"`, `"VLLM"`, `"OLLAMA"`, `"LLAMA_CPP"`, `"CUSTOM_OPENAI_COMPATIBLE"`. Use `"...
 - `supported_modalities` (list[Modality], optional): Modalities supported by this LLM (e.g. `["TEXT"]`). Auto-inferred from `model_identifier` for known models; defaults to `["TEXT"]` on the server if...
 - `version` (str, optional): Version information
@@ -215,11 +215,11 @@ Create a new Space
 Parameters:
 - `name` (str): The desired name for the space. Must be unique within the user's scope.
 - `space_embedders` (list[SpaceEmbedderConfig]): List of embedder configurations to associate with this space. At least one embedder configuration is required. Each specifies an embedder ID and a ...
-- `default_chunking_config` (ChunkingConfiguration, optional, default={'recursive': {'chunkSize': 512, 'chunkOverlap': 64, 'keepStrategy': 'KEEP_END', 'lengthMeasurement': 'CHARACTER_COUNT'}}): Default strategy to chunk any memory ingested into this space. Can be overriden by per-memory chunking strategy.
+- `default_chunking_config` (ChunkingConfiguration, optional, default={'recursive': {'chunkSize': 512, 'chunkOverlap': 64, 'keepStrategy': 'KEEP_END', 'lengthMeasurement': 'CHARACTER_COUNT'}}): Default strategy to chunk any memory ingested into this space. Can be overridden by per-memory chunking strategy.
 - `labels` (dict[str, str], optional): A set of key-value pairs to categorize or tag the space. Used for filtering and organizational purposes.
-- `owner_id` (str, optional): Optional owner ID. If not provided, derived from the authentication context. Requires CREATE_SPACE_ANY permission if specified.
+- `owner_id` (str · uuid, optional): Optional owner ID. If not provided, derived from the authentication context. Requires CREATE_SPACE_ANY permission if specified.
 - `public_read` (bool, optional): Indicates if the space and its memories can be read by unauthenticated users or users other than the owner. Defaults to false.
-- `space_id` (str, optional): Optional client-provided UUID for idempotent creation. If not provided, server generates a new UUID. Returns ALREADY_EXISTS if ID is already in use.
+- `space_id` (str · uuid, optional): Optional client-provided UUID for idempotent creation. If not provided, server generates a new UUID. Returns ALREADY_EXISTS if ID is already in use.
 
 #### `spaces.get(id: str) -> Space`
 
@@ -264,11 +264,11 @@ Parameters:
 Create a new memory
 
 Parameters:
-- `space_id` (str): ID of the space where this memory will be stored
+- `space_id` (str · uuid): ID of the space where this memory will be stored
 - `chunking_config` (ChunkingConfiguration, optional): Chunking strategy for this memory (if not provided, uses space default)
 - `content_type` (str, optional): MIME type of the content. Auto-inferred as `"text/plain"` for `original_content`, or from the file extension for `file_path`. Required when using `...
 - `extract_page_images` (bool, optional): Optional hint to extract page images for eligible document types (for example, PDFs)
-- `memory_id` (str, optional): Optional client-provided UUID for the memory. If omitted, the server generates one. Returns ALREADY_EXISTS if the ID is already in use.
+- `memory_id` (str · uuid, optional): Optional client-provided UUID for the memory. If omitted, the server generates one. Returns ALREADY_EXISTS if the ID is already in use.
 - `metadata` (dict[str, Any], optional): Metadata for the memory. Any JSON-serializable dict. Can be nested. Can be used for filtering in memory list operation. (e.g. `{"author": "John Doe...
 - `original_content` (str, optional): Original content as plain text. Mutually exclusive with `file_path` and `original_content_b64`.
 - `original_content_b64` (str, optional): Original content as base64-encoded binary data. Mutually exclusive with `file_path` and `original_content`.
@@ -277,7 +277,7 @@ Parameters:
 
 #### `memories.retrieve(message: str, chronological_resort=None, context=None, fetch_memory=None, fetch_memory_content=None, gen_token_budget=None, hnsw=None, llm_id=None, llm_temp=None, logging=None, max_results=None, post_processor=None, prompt=None, relevance_threshold=None, requested_size=None, reranker_id=None, space_ids=None, space_keys=None, sys_prompt=None, stream=True) -> RetrieveMemoryStream | list[RetrieveMemoryEvent]`
 
-Advanced semantic memory retrieval with JSON
+Retrieve Memories
 
 Parameters:
 - `message` (str): Primary query/message for semantic search.
@@ -415,7 +415,7 @@ Initialize the system
 
 #### `users.get(email=None, id=None) -> UserResponse`
 
-Get a user by ID
+Get a user by ID or email
 
 Parameters:
 - `email` (str, optional): The user's email address. Mutually exclusive with `id` — exactly one must be provided.
@@ -457,7 +457,7 @@ Reload the active license from disk
 Create a new API key
 
 Parameters:
-- `api_key_id` (str, optional): Optional client-provided UUID for idempotent creation. If not provided, server generates a new UUID. Returns ALREADY_EXISTS if ID is already in use.
+- `api_key_id` (str · uuid, optional): Optional client-provided UUID for idempotent creation. If not provided, server generates a new UUID. Returns ALREADY_EXISTS if ID is already in use.
 - `expires_at` (int, optional): Expiration timestamp in milliseconds since epoch. If not provided, the key does not expire.
 - `labels` (dict[str, str], optional): Key-value pairs of metadata associated with the API key. Used for organization and filtering.
 
@@ -524,7 +524,6 @@ Pass `model_identifier` to create methods. The SDK auto-infers `provider_type`, 
 Import from `goodmem.models`:
 
 - **Responses**: `EmbedderResponse`, `RerankerResponse`, `LLMResponse`, `Space`, `Memory`, `ApiKeyResponse`, `UserResponse`
-- **Create requests**: `EmbedderCreationRequest`, `RerankerCreationRequest`, `LLMCreationRequest`, `SpaceCreationRequest`
 - **Update requests**: `UpdateEmbedderRequest`, `UpdateRerankerRequest`, `LLMUpdateRequest`, `UpdateSpaceRequest`, `UpdateApiKeyRequest`
 - **Retrieval**: `RetrieveMemoryEvent`, `RetrievedItem`, `ChunkReference`
 - **Configuration**: `ChunkingConfiguration`, `EndpointAuthentication`, `PostProcessor`, `SpaceEmbedderConfig`
