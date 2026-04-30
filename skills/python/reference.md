@@ -38,7 +38,7 @@ Package metadata:
 
 ## API Reference
 
-Namespaces: `client.embedders`, `client.rerankers`, `client.llms`, `client.spaces`, `client.memories`, `client.ocr`, `client.system`, `client.users`, `client.admin`, `client.apikeys`
+Namespaces: `client.embedders`, `client.rerankers`, `client.llms`, `client.spaces`, `client.memories`, `client.ocr`, `client.system`, `client.users`, `client.admin`, `client.apikeys`, `client.ping`
 
 ### client.embedders
 
@@ -259,7 +259,7 @@ Parameters:
 
 ### client.memories
 
-#### `memories.create(space_id: str, chunking_config=None, content_type=None, extract_page_images=None, memory_id=None, metadata=None, original_content=None, original_content_b64=None, original_content_ref=None, file_path=None) -> Memory`
+#### `memories.create(space_id: str, chunking_config=None, content_type=None, extract_page_images=None, file_path=None, memory_id=None, metadata=None, original_content=None, original_content_b64=None, original_content_ref=None) -> Memory`
 
 Create a new memory
 
@@ -268,14 +268,14 @@ Parameters:
 - `chunking_config` (ChunkingConfiguration, optional): Chunking strategy for this memory (if not provided, uses space default)
 - `content_type` (str, optional): MIME type of the content. Auto-inferred as `"text/plain"` for `original_content`, or from the file extension for `file_path`. Required when using `...
 - `extract_page_images` (bool, optional): Optional hint to extract page images for eligible document types (for example, PDFs)
+- `file_path` (str, optional): Path to a local file to upload. Mutually exclusive with `original_content` and `original_content_b64`.
 - `memory_id` (str · uuid, optional): Optional client-provided UUID for the memory. If omitted, the server generates one. Returns ALREADY_EXISTS if the ID is already in use.
 - `metadata` (dict[str, Any], optional): Metadata for the memory. Any JSON-serializable dict. Can be nested. Can be used for filtering in memory list operation. (e.g. `{"author": "John Doe...
 - `original_content` (str, optional): Original content as plain text. Mutually exclusive with `file_path` and `original_content_b64`.
 - `original_content_b64` (str, optional): Original content as base64-encoded binary data. Mutually exclusive with `file_path` and `original_content`.
 - `original_content_ref` (str, optional): Reference to external content location. Functions as a metadata field. Does not make Goodmem download the content from the URL and use it to create...
-- `file_path` (str, optional): Path to a local file to upload. Mutually exclusive with `original_content` and `original_content_b64`.
 
-#### `memories.retrieve(message: str, chronological_resort=None, context=None, fetch_memory=None, fetch_memory_content=None, gen_token_budget=None, hnsw=None, llm_id=None, llm_temp=None, logging=None, max_results=None, post_processor=None, prompt=None, relevance_threshold=None, requested_size=None, reranker_id=None, space_ids=None, space_keys=None, sys_prompt=None, stream=True) -> RetrieveMemoryStream | list[RetrieveMemoryEvent]`
+#### `memories.retrieve(message: str, chronological_resort=None, context=None, fetch_memory=None, fetch_memory_content=None, gen_token_budget=None, hnsw=None, llm_id=None, llm_temp=None, logging=None, max_results=None, post_processor=None, prompt=None, relevance_threshold=None, requested_size=None, reranker_id=None, space_ids=None, space_keys=None, stream=True, sys_prompt=None) -> RetrieveMemoryStream | List[RetrieveMemoryEvent]`
 
 Retrieve Memories
 
@@ -298,8 +298,8 @@ Parameters:
 - `reranker_id` (str, optional): The ID of the reranker to process the retrieved memories. If unset, no reranker will be used.
 - `space_ids` (list[str], optional): A list of space UUID strings, converted to the `space_keys` structure the API requires.
 - `space_keys` (list[SpaceKey], optional): Full space configuration for retrieval — a list of `SpaceKey` dicts, each with a required `space_id` and optional `embedder_weights` (per-embedder ...
+- `stream` (bool, optional, default=True): If `True` (default), returns a `RetrieveMemoryStream` context manager that yields events as they arrive from the server. If `False`, collects all e...
 - `sys_prompt` (str, optional): System prompt for LLM post-processing. If unset, the server's default system prompt is used. Only applies when `llm_id` is set.
-- `stream` (bool, optional, default=True): If True (default), returns a streaming context manager. If False, returns a list.
 
 #### `memories.get(id: str, include_content=None, include_processing_history=None) -> Memory`
 
@@ -346,7 +346,7 @@ List memories in a space
 
 Parameters:
 - `space_id` (str): The UUID of the space containing the memories
-- `filter` (str, optional): Metadata filter expression for list results. See [Metadata Filters Guide](../../../../how-to/metadata-filters) and [Filter Expressions Reference](....
+- `filter` (str, optional): Metadata filter expression for list results. See [Metadata Filters Guide](/docs/how-to/metadata-filters) and [Filter Expressions Reference](/docs/r...
 - `include_content` (bool, optional): Whether to include the original content in the response (defaults to false).
 - `include_processing_history` (bool, optional): Whether to include background job processing history in the response (defaults to false).
 - `sort_by` (str, optional): Field to sort by (e.g., 'created_at').
@@ -479,6 +479,38 @@ Delete an API key
 
 Parameters:
 - `id` (str): The UUID of the API key to delete
+
+### client.ping
+
+#### `ping.once(target_id: str, payload=None, payload_size_bytes=None, payload_type=None, target_type_hint=None, timeout_ms=None) -> PingResult`
+
+Run a single ping probe
+
+Parameters:
+- `target_id` (str · uuid): Target resource ID (UUID)
+- `payload` (str, optional): Explicit UTF-8 payload to send with the probe (mutually exclusive with payloadSizeBytes)
+- `payload_size_bytes` (int, optional): Synthetic payload size in bytes (mutually exclusive with payload)
+- `payload_type` (PingPayloadType, optional): Desired payload type (defaults to provider-specific value)
+- `target_type_hint` (PingTargetType, optional): Optional hint for the target resource type
+- `timeout_ms` (int, optional): Per-probe timeout in milliseconds (0 uses server default)
+
+#### `ping.stream(target_id: str, accept=None, count=None, interval_ms=None, jitter=None, labels=None, max_in_flight=None, payload=None, payload_size_bytes=None, payload_type=None, target_type_hint=None, timeout_ms=None) -> Stream[PingEvent] | list[PingEvent]`
+
+Stream ping probe results
+
+Parameters:
+- `target_id` (str · uuid): Target resource ID (UUID)
+- `accept` (str, optional): Response format: 'text/event-stream' for Server-Sent Events or 'application/x-ndjson' for newline-delimited JSON
+- `count` (int, optional): Number of probes to run (0 uses server default)
+- `interval_ms` (int, optional): Delay between probes in milliseconds (0 uses server default)
+- `jitter` (bool, optional): Add jitter to probe scheduling
+- `labels` (dict[str, str], optional): Optional labels to attach to the ping session
+- `max_in_flight` (int, optional): Maximum concurrent probes (defaults to 1)
+- `payload` (str, optional): Explicit UTF-8 payload to send with each probe (mutually exclusive with payloadSizeBytes)
+- `payload_size_bytes` (int, optional): Synthetic payload size in bytes (mutually exclusive with payload)
+- `payload_type` (PingPayloadType, optional): Desired payload type (defaults to provider-specific value)
+- `target_type_hint` (PingTargetType, optional): Optional hint for the target resource type
+- `timeout_ms` (int, optional): Per-probe timeout in milliseconds (0 uses server default)
 
 ## Convenience shortcuts
 
