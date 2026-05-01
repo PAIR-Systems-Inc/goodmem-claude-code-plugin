@@ -171,6 +171,13 @@
     }
   },
   {
+    "name": "Cleanup: delete a specific memory by ID",
+    "instruction": "List the memories in the GoodMem space named \"E2E Test Space\", pick one of the memory IDs, and delete that memory directly (not the whole space).",
+    "expect": {
+      "tool": "goodmem_memories_delete"
+    }
+  },
+  {
     "name": "Cleanup: delete space (cascades to memories)",
     "instruction": "Find the GoodMem space named \"E2E Test Space\" and delete it",
     "expect": {
