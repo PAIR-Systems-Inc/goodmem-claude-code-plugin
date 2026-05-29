@@ -53,12 +53,12 @@ Parameters:
 - `api_path` (str, optional): API path for embeddings request (defaults: Cohere /v2/embed, TEI /embed, others /embeddings)
 - `credentials` (EndpointAuthentication, optional): Structured credential payload describing how to authenticate with the provider. Required for SaaS providers; optional for local or proxy providers.
 - `description` (str, optional): Description of the embedder
-- `dimensionality` (int, optional): Output vector dimensions. Auto-inferred from `model_identifier` for known models (using `dimensions.default` from the model registry); required whe...
+- `dimensionality` (int · int32, optional): Output vector dimensions. Auto-inferred from `model_identifier` for known models (using `dimensions.default` from the model registry); required whe...
 - `distribution_type` (DistributionType, optional, default="DENSE"): The distribution type of the embedder's vector output. Defaults to `"DENSE"` when not specified.
 - `embedder_id` (str · uuid, optional): Optional client-provided UUID for idempotent creation. If not provided, server generates a new UUID. Returns ALREADY_EXISTS if ID is already in use.
 - `endpoint_url` (str, optional): Base URL for the embedding endpoint. Auto-inferred from `provider_type` for known providers.
 - `labels` (dict[str, str], optional): User-defined labels for categorization
-- `max_sequence_length` (int, optional): Maximum token length accepted by the model. Auto-inferred from `model_identifier` for known models; required when `model_identifier` is not in the ...
+- `max_sequence_length` (int · int32, optional): Maximum token length accepted by the model. Auto-inferred from `model_identifier` for known models; required when `model_identifier` is not in the ...
 - `monitoring_endpoint` (str, optional): Monitoring endpoint URL
 - `owner_id` (str · uuid, optional): Optional owner ID. If not provided, derived from the authentication context. Requires CREATE_EMBEDDER_ANY permission if specified.
 - `provider_type` (ProviderType, optional): Provider backend — one of `"OPENAI"`, `"COHERE"`, `"VOYAGE"`, `"JINA"`, `"VLLM"`, `"TEI"`, `"LLAMA_CPP"`. Use `"OPENAI"` for OpenAI-compatible endp...
@@ -168,7 +168,7 @@ Parameters:
 - `endpoint_url` (str, optional): Base URL for the LLM endpoint (OpenAI-compatible base, typically ends with `/v1`). Auto-inferred from `provider_type` for known providers; required...
 - `labels` (dict[str, str], optional): User-defined labels for categorization
 - `llm_id` (str · uuid, optional): Optional client-provided UUID for idempotent creation. If not provided, server generates a new UUID. Returns ALREADY_EXISTS if ID is already in use.
-- `max_context_length` (int, optional): Maximum context window size in tokens. Auto-inferred from `model_identifier` for known models; recommended when `model_identifier` is not in the re...
+- `max_context_length` (int · int32, optional): Maximum context window size in tokens. Auto-inferred from `model_identifier` for known models; recommended when `model_identifier` is not in the re...
 - `monitoring_endpoint` (str, optional): Monitoring endpoint URL
 - `owner_id` (str · uuid, optional): Optional owner ID. If not provided, derived from the authentication context. Requires CREATE_LLM_ANY permission if specified.
 - `provider_type` (LLMProviderType, optional): Provider backend — one of `"OPENAI"`, `"LITELLM_PROXY"`, `"OPEN_ROUTER"`, `"VLLM"`, `"OLLAMA"`, `"LLAMA_CPP"`, `"CUSTOM_OPENAI_COMPATIBLE"`. Use `"...
@@ -275,7 +275,7 @@ Parameters:
 - `original_content_b64` (str, optional): Original content as base64-encoded binary data. Mutually exclusive with `file_path` and `original_content`.
 - `original_content_ref` (str, optional): Reference to external content location. Functions as a metadata field. Does not make Goodmem download the content from the URL and use it to create...
 
-#### `memories.retrieve(message: str, chronological_resort=None, context=None, fetch_memory=None, fetch_memory_content=None, gen_token_budget=None, hnsw=None, llm_id=None, llm_temp=None, logging=None, max_results=None, post_processor=None, prompt=None, relevance_threshold=None, requested_size=None, reranker_id=None, space_ids=None, space_keys=None, stream=True, sys_prompt=None) -> RetrieveMemoryStream | List[RetrieveMemoryEvent]`
+#### `memories.retrieve(message: str, chronological_resort=None, context=None, fetch_memory=None, fetch_memory_content=None, gen_token_budget=None, hnsw=None, llm_id=None, llm_temp=None, logging=None, max_results=None, post_processor=None, prompt=None, relevance_threshold=None, requested_size=None, reranker_id=None, space_ids=None, space_keys=None, stream=True, sys_prompt=None) -> RetrieveMemoryStream | list[RetrieveMemoryEvent]`
 
 Retrieve Memories
 
@@ -294,7 +294,7 @@ Parameters:
 - `post_processor` (PostProcessor, optional): Optional post-processor configuration to transform retrieval results.
 - `prompt` (str, optional): Custom prompt for LLM post-processing. If unset, the server's default prompt is used. Only applies when `llm_id` is set.
 - `relevance_threshold` (float, optional): Minimum relevance score for retrieved memories. Only applies when `reranker_id` is set.
-- `requested_size` (int, optional): Maximum number of memories to retrieve.
+- `requested_size` (int · int32, optional): Maximum number of memories to retrieve.
 - `reranker_id` (str, optional): The ID of the reranker to process the retrieved memories. If unset, no reranker will be used.
 - `space_ids` (list[str], optional): A list of space UUID strings, converted to the `space_keys` structure the API requires.
 - `space_keys` (list[SpaceKey], optional): Full space configuration for retrieval — a list of `SpaceKey` dicts, each with a required `space_id` and optional `embedder_weights` (per-embedder ...
@@ -324,11 +324,11 @@ List memory page images
 Parameters:
 - `id` (str): Memory UUID
 - `content_type` (str, optional): Optional rendition filter for page-image MIME type, such as image/png.
-- `dpi` (int, optional): Optional rendition filter for page-image DPI.
-- `end_page_index` (int, optional): Optional upper bound for returned page indices, inclusive.
-- `max_results` (int, optional): Maximum number of results per page.
+- `dpi` (int · int32, optional): Optional rendition filter for page-image DPI.
+- `end_page_index` (int · int32, optional): Optional upper bound for returned page indices, inclusive.
+- `max_results` (int · int32, optional): Maximum number of results per page.
 - `next_token` (str, optional): Opaque pagination token for the next page. Do not parse or construct it.
-- `start_page_index` (int, optional): Optional lower bound for returned page indices, inclusive.
+- `start_page_index` (int · int32, optional): Optional lower bound for returned page indices, inclusive.
 
 #### `memories.pages_image(id: str, page_index: int, content_type=None, dpi=None) -> bytes`
 
@@ -336,9 +336,9 @@ Download memory page image content
 
 Parameters:
 - `id` (str): Memory UUID
-- `page_index` (int): 0-based page index
+- `page_index` (int · int32): 0-based page index
 - `content_type` (str, optional): Optional rendition filter. MIME type of the desired page image, such as image/png.
-- `dpi` (int, optional): Optional rendition filter. If omitted, the unique page-image rendition for the page is returned; if multiple renditions exist, specify dpi and/or c...
+- `dpi` (int · int32, optional): Optional rendition filter. If omitted, the unique page-image rendition for the page is returned; if multiple renditions exist, specify dpi and/or c...
 
 #### `memories.list(space_id: str, filter=None, include_content=None, include_processing_history=None, sort_by=None, sort_order=None, status_filter=None, page_size=None, max_items=None, next_token=None) -> Page[Memory]`
 
@@ -394,12 +394,12 @@ Run OCR on a document or image
 
 Parameters:
 - `content` (str, optional): Base64-encoded document bytes. Mutually exclusive with `file_path`.
-- `end_page` (int, optional): 0-based inclusive end page
+- `end_page` (int · int32, optional): 0-based inclusive end page
 - `file_path` (str, optional): Path to a local file to OCR. Mutually exclusive with `content`.
 - `format` (OcrInputFormat, optional): Input format hint (AUTO, PDF, TIFF, PNG, JPEG, BMP)
 - `include_markdown` (bool, optional): Include markdown rendering in the response
 - `include_raw_json` (bool, optional): Include raw OCR JSON payload in the response
-- `start_page` (int, optional): 0-based inclusive start page
+- `start_page` (int · int32, optional): 0-based inclusive start page
 
 ### client.system
 
@@ -433,7 +433,7 @@ Request the server to enter drain mode
 
 Parameters:
 - `reason` (str, optional): Human-readable reason for initiating drain mode.
-- `timeout_sec` (int, optional): Maximum seconds to wait for the server to quiesce before returning.
+- `timeout_sec` (int · int32, optional): Maximum seconds to wait for the server to quiesce before returning.
 - `wait_for_quiesce` (bool, optional): If true, wait for in-flight requests to complete and the server to reach QUIESCED before responding.
 
 #### `admin.background_jobs.purge(older_than: str, dry_run=None, limit=None, statuses=None) -> AdminPurgeJobsResponse`
@@ -441,10 +441,10 @@ Parameters:
 Purge completed background jobs
 
 Parameters:
-- `older_than` (str): ISO-8601 timestamp cutoff; only terminal jobs older than this instant are eligible.
+- `older_than` (str · date-time): ISO-8601 timestamp cutoff; only terminal jobs older than this instant are eligible.
 - `dry_run` (bool, optional): If true, report purge counts without deleting any rows.
-- `limit` (int, optional): Maximum number of jobs to purge in this request.
-- `statuses` (list[str], optional): Optional terminal background job statuses to target for purging.
+- `limit` (int · int32, optional): Maximum number of jobs to purge in this request. Must be >= 0; 0 means no limit.
+- `statuses` (list[PurgeableBackgroundJobStatus], optional): Optional terminal background job statuses to target for purging. If omitted, all terminal statuses are eligible. Canonical values are BACKGROUND_JO...
 
 #### `admin.license.reload() -> AdminReloadLicenseResponse`
 
@@ -458,7 +458,7 @@ Create a new API key
 
 Parameters:
 - `api_key_id` (str · uuid, optional): Optional client-provided UUID for idempotent creation. If not provided, server generates a new UUID. Returns ALREADY_EXISTS if ID is already in use.
-- `expires_at` (int, optional): Expiration timestamp in milliseconds since epoch. If not provided, the key does not expire.
+- `expires_at` (int · int64, optional): Expiration timestamp in milliseconds since epoch. If not provided, the key does not expire.
 - `labels` (dict[str, str], optional): Key-value pairs of metadata associated with the API key. Used for organization and filtering.
 
 #### `apikeys.list() -> list[ApiKeyResponse]`
@@ -489,28 +489,28 @@ Run a single ping probe
 Parameters:
 - `target_id` (str · uuid): Target resource ID (UUID)
 - `payload` (str, optional): Explicit UTF-8 payload to send with the probe (mutually exclusive with payloadSizeBytes)
-- `payload_size_bytes` (int, optional): Synthetic payload size in bytes (mutually exclusive with payload)
+- `payload_size_bytes` (int · int32, optional): Synthetic payload size in bytes (mutually exclusive with payload)
 - `payload_type` (PingPayloadType, optional): Desired payload type (defaults to provider-specific value)
 - `target_type_hint` (PingTargetType, optional): Optional hint for the target resource type
-- `timeout_ms` (int, optional): Per-probe timeout in milliseconds (0 uses server default)
+- `timeout_ms` (int · int32, optional): Per-probe timeout in milliseconds (0 uses server default)
 
-#### `ping.stream(target_id: str, accept=None, count=None, interval_ms=None, jitter=None, labels=None, max_in_flight=None, payload=None, payload_size_bytes=None, payload_type=None, target_type_hint=None, timeout_ms=None) -> Stream[PingEvent] | list[PingEvent]`
+#### `ping.stream(target_id: str, count=None, interval_ms=None, jitter=None, labels=None, max_in_flight=None, payload=None, payload_size_bytes=None, payload_type=None, stream=True, target_type_hint=None, timeout_ms=None) -> PingStream | list[PingEvent]`
 
 Stream ping probe results
 
 Parameters:
 - `target_id` (str · uuid): Target resource ID (UUID)
-- `accept` (str, optional): Response format: 'text/event-stream' for Server-Sent Events or 'application/x-ndjson' for newline-delimited JSON
-- `count` (int, optional): Number of probes to run (0 uses server default)
-- `interval_ms` (int, optional): Delay between probes in milliseconds (0 uses server default)
+- `count` (int · int32, optional): Number of probes to run (0 uses server default)
+- `interval_ms` (int · int32, optional): Delay between probes in milliseconds (0 uses server default)
 - `jitter` (bool, optional): Add jitter to probe scheduling
 - `labels` (dict[str, str], optional): Optional labels to attach to the ping session
-- `max_in_flight` (int, optional): Maximum concurrent probes (defaults to 1)
+- `max_in_flight` (int · int32, optional): Maximum concurrent probes (defaults to 1)
 - `payload` (str, optional): Explicit UTF-8 payload to send with each probe (mutually exclusive with payloadSizeBytes)
-- `payload_size_bytes` (int, optional): Synthetic payload size in bytes (mutually exclusive with payload)
+- `payload_size_bytes` (int · int32, optional): Synthetic payload size in bytes (mutually exclusive with payload)
 - `payload_type` (PingPayloadType, optional): Desired payload type (defaults to provider-specific value)
+- `stream` (bool, optional, default=True): If `True` (default), returns a `PingStream` context manager that yields events as they arrive from the server. If `False`, collects all events and ...
 - `target_type_hint` (PingTargetType, optional): Optional hint for the target resource type
-- `timeout_ms` (int, optional): Per-probe timeout in milliseconds (0 uses server default)
+- `timeout_ms` (int · int32, optional): Per-probe timeout in milliseconds (0 uses server default)
 
 ## Convenience shortcuts
 
@@ -534,6 +534,7 @@ The SDK provides convenience parameters that simplify common patterns.
 - **`memories.retrieve()`**: `sys_prompt` -> `post_processor.config.sys_prompt` — System prompt for LLM post-processing. If unset, the server's default system prompt is used. Only applies when `llm_id` is set.
 - **`memories.retrieve()`**: `chronological_resort` -> `post_processor.config.chronological_resort` — Re-sort retrieved memories chronologically after semantic ranking. Defaults to true on the server. Only applies when `llm_id` or `reranker_id` is set.
 - **`ocr.document()`**: `file_path` — Path to a local file to OCR. Mutually exclusive with `content`.
+- **`ping.stream()`**: `stream` — If `True` (default), returns a `PingStream` context manager that yields events as they arrive from the server. If `False`, collects all events and returns a plain `list[PingEvent]`.
 - **`rerankers.create()`**: `api_key` -> `credentials` — Converts a plain API key string to the full `EndpointAuthentication` structure (i.e. `{"kind": "CREDENTIAL_KIND_API_KEY", "api_key": {"inline_secret": "sk-..."}}`).
 - **`spaces.list()`**: `page_size` -> `max_results` — Number of results per page (defaults to 50, clamped to [1, 1000] by the server).
 - **`spaces.list()`**: `max_items` — Maximum total number of items to return across all pages.
@@ -545,8 +546,8 @@ Pass `model_identifier` to create methods. The SDK auto-infers `provider_type`, 
 **Embedders** (29):
 `text-embedding-3-large`, `text-embedding-3-small`, `embed-v4.0`, `embed-english-v3.0`, `embed-english-light-v3.0`, `embed-multilingual-v3.0`, `embed-multilingual-light-v3.0`, `jina-embeddings-v4`, `jina-embeddings-v3`, `jina-embeddings-v2-base-en`, `jina-embeddings-v2-base-es`, `jina-embeddings-v2-base-de`, `jina-embeddings-v2-base-zh`, `jina-embeddings-v2-base-code`, `jina-clip-v1`, `jina-clip-v2`, `voyage-4-large`, `voyage-4`, `voyage-4-lite`, `voyage-code-3`, `voyage-3-large`, `voyage-3.5`, `voyage-3.5-lite`, `voyage-3`, `voyage-3-lite`, `voyage-finance-2`, `voyage-law-2`, `voyage-code-2`, `voyage-multilingual-2`
 
-**LLMs** (34):
-`gpt-5.2`, `gpt-5.2-pro`, `gpt-5.1`, `gpt-5`, `gpt-5-mini`, `gpt-5-nano`, `o3`, `o3-mini`, `o4-mini`, `gpt-4.1`, `gpt-4.1-mini`, `gpt-4.1-nano`, `gpt-4o`, `gpt-4o-mini`, `gpt-4-turbo`, `gpt-3.5-turbo`, `o1`, `o1-mini`, `o1-preview`, `command-a-03-2025`, `command-r7b-12-2024`, `command-a-translate-08-2025`, `command-a-reasoning-08-2025`, `command-a-vision-07-2025`, `command-r-08-2024`, `command-r-plus-08-2024`, `c4ai-aya-expanse-8b`, `c4ai-aya-expanse-32b`, `c4ai-aya-vision-8b`, `c4ai-aya-vision-32b`, `command-r-03-2024`, `command-r-plus-04-2024`, `command`, `command-light`
+**LLMs** (19):
+`gpt-5.2`, `gpt-5.2-pro`, `gpt-5.1`, `gpt-5`, `gpt-5-mini`, `gpt-5-nano`, `o3`, `o3-mini`, `o4-mini`, `gpt-4.1`, `gpt-4.1-mini`, `gpt-4.1-nano`, `gpt-4o`, `gpt-4o-mini`, `gpt-4-turbo`, `gpt-3.5-turbo`, `o1`, `o1-mini`, `o1-preview`
 
 **Rerankers** (16):
 `rerank-v4.0-pro`, `rerank-v4.0-fast`, `rerank-v3.5`, `rerank-english-v3.0`, `rerank-multilingual-v3.0`, `jina-reranker-v3`, `jina-reranker-v2-base-multilingual`, `jina-reranker-v1-base-en`, `jina-reranker-v1-turbo-en`, `jina-reranker-v1-tiny-en`, `rerank-2.5`, `rerank-2.5-lite`, `rerank-2`, `rerank-2-lite`, `rerank-1`, `rerank-lite-1`

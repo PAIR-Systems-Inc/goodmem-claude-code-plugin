@@ -6,7 +6,7 @@ allowed-tools: Read
 
 # GoodMem MCP Tools — Workflow Guide
 
-The GoodMem MCP server exposes tools across 10 namespaces plus 3 local utilities. Most tools map to a GoodMem REST API endpoint; the utilities (`goodmem_configure`, `goodmem_lookup_model`, `goodmem_client_info`) run locally without contacting the server. Use `tools/list` to discover exact parameter schemas — this document covers workflow and patterns only.
+The GoodMem MCP server exposes tools across multiple API namespaces plus local utilities. Most tools map to a GoodMem REST API endpoint; the utilities (`goodmem_configure`, `goodmem_lookup_model`, `goodmem_client_info`) run locally without contacting the server. Use `tools/list` to discover exact parameter schemas — this document covers workflow and patterns only.
 
 **Setup**: The MCP server needs `GOODMEM_BASE_URL` and `GOODMEM_API_KEY`. These can be set as environment variables before launch, or configured from chat via `goodmem_configure`.
 
@@ -61,6 +61,12 @@ Store, retrieve, and manage memories within spaces.
 
 ### OCR (`goodmem_ocr_*`)
 - `document` — extract text from a document using OCR
+
+### Ping (`goodmem_ping_*`)
+Connectivity probes for embedders, LLMs, rerankers, and other GoodMem endpoints.
+
+- `once` — run one probe and return a `PingResult`
+- `stream` — run streaming probes and return NDJSON ping events
 
 ### Users (`goodmem_users_*`)
 - `me` — get the current authenticated user
