@@ -35,10 +35,13 @@ Reference for all GoodMem MCP tools. Use this when you need to look up tool name
 ### `goodmem:python` — Python SDK Reference
 Complete API reference for the `goodmem` Python package. Use this when writing Python code that integrates with GoodMem. Includes method signatures, convenience shortcuts, model identifiers, and code examples.
 
+### `goodmem:java` — Java SDK Reference
+Usage reference for the `ai.pairsys:goodmem-java` package. Use this when writing Java code that integrates with GoodMem. Includes client setup, request builders, typed IDs, streaming, pagination, async usage, and common RAG patterns.
+
 ### `goodmem:help` — This skill
 Overview and setup instructions.
 
-## Two Ways to Use GoodMem
+## Three Ways to Use GoodMem
 
 ### 1. Direct operations (MCP tools)
 Ask Claude to perform GoodMem operations in natural language. Claude calls MCP tools behind the scenes.
@@ -58,6 +61,14 @@ Examples:
 - "Show me how to do semantic retrieval with the GoodMem SDK"
 - "Write a RAG pipeline using GoodMem for memory storage"
 
+### 3. Java code generation (SDK skill)
+Ask Claude to write Java code using the GoodMem SDK.
+
+Examples:
+- "Write a Java program that creates an embedder and stores documents"
+- "Show me Java streaming retrieval with the GoodMem SDK"
+- "Write a Java RAG pipeline using GoodMem with typed request builders"
+
 ## Common Workflows
 
 ### Quick start with MCP
@@ -66,7 +77,7 @@ Examples:
 3. "Store this text as a memory: [your content]"
 4. "Search docs for [your query]"
 
-### Build a RAG app with the SDK
-1. "Write a Python script that sets up a GoodMem RAG pipeline"
-2. Claude generates code using the `goodmem` Python package
+### Build a RAG app with an SDK
+1. "Write a Python or Java script that sets up a GoodMem RAG pipeline"
+2. Claude generates code using the `goodmem` Python package or `ai.pairsys:goodmem-java`
 3. Run the generated script

@@ -2,7 +2,7 @@
 
 A Claude Code plugin for [GoodMem](https://docs.goodmem.ai) — memory infrastructure for AI agents.
 
-With this plugin, you can operate GoodMem's memory infrastructure in plain English — create and manage embedders, rerankers, and LLMs, ingest memories from files, base64 strings, and plain text, and build knowledge-powered agents for RAG and Deep Research. Also includes the full Python SDK reference for writing GoodMem code.
+With this plugin, you can operate GoodMem's memory infrastructure in plain English — create and manage embedders, rerankers, and LLMs, ingest memories from files, base64 strings, and plain text, and build knowledge-powered agents for RAG and Deep Research. Also includes Python and Java SDK references for writing GoodMem code.
 
 ## Use cases
 
@@ -75,6 +75,7 @@ After installing a new version or pulling the latest changes, run `/reload-plugi
 |-----------|-------------|
 | `skills/help/` | Setup guide, available skills overview, example workflows |
 | `skills/python/` | Python SDK reference — method signatures, parameters, examples |
+| `skills/java/` | Java SDK usage reference — setup, builders, streaming, pagination, examples |
 | `skills/mcp/` | MCP tools reference — all 41+ tools with parameters |
 | `.mcp.json` | MCP server with auto-inference from 79 model registries |
 
@@ -82,6 +83,7 @@ After installing a new version or pulling the latest changes, run `/reload-plugi
 
 - **`goodmem:help`** — Overview of all skills, setup instructions, example workflows
 - **`goodmem:python`** — Python SDK reference for writing GoodMem code
+- **`goodmem:java`** — Java SDK reference for writing GoodMem code
 - **`goodmem:mcp`** — MCP tools reference for direct operations
 
 ### MCP tools
@@ -106,7 +108,7 @@ Explicit values always override inferred defaults.
 
 ### Credential validation
 
-SaaS providers (OpenAI, Cohere, Voyage, Jina, and OpenAI-compatible endpoints for Anthropic, Google, Mistral) require API credentials. If you create an embedder, LLM, or reranker pointing at a known SaaS hostname without providing credentials, the plugin raises a clear error before the request reaches the server. Pass `credentials` (MCP) or `api_key` (Python SDK) to proceed.
+SaaS providers (OpenAI, Cohere, Voyage, Jina, and OpenAI-compatible endpoints for Anthropic, Google, Mistral) require API credentials. If you create an embedder, LLM, or reranker pointing at a known SaaS hostname without providing credentials, the plugin raises a clear error before the request reaches the server. Pass `credentials` (MCP), `api_key` (Python SDK), or the provider API key overload (Java SDK) to proceed.
 
 ## Links
 
