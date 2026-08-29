@@ -12,13 +12,14 @@ With this plugin, you can operate GoodMem's memory infrastructure in plain Engli
 
 ## Installation
 
-**From the official marketplace:**
+**From the community marketplace** (preferred):
 
 ```
-/plugin install goodmem
+/plugin marketplace add anthropics/claude-plugins-community
+/plugin install goodmem@claude-community
 ```
 
-**From this repo:**
+**From this repo** (fallback — use only if the community marketplace is unavailable):
 
 ```
 /plugin marketplace add PAIR-Systems-Inc/goodmem-claude-code-plugin
@@ -115,3 +116,4 @@ SaaS providers (OpenAI, Cohere, Voyage, Jina, and OpenAI-compatible endpoints fo
 - [GoodMem Documentation](https://docs.goodmem.ai)
 - [Python SDK on PyPI](https://pypi.org/project/goodmem/)
 - [MCP Server on npm](https://www.npmjs.com/package/@pairsystems/goodmem-mcp)
+

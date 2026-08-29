@@ -56,8 +56,27 @@ Store, retrieve, and manage memories within spaces.
 - `list` — list memories in a space
 - `delete` / `batch_delete` — remove memories
 - `pages` — list memory page images with optional filters and pagination
+- `content` — download the original memory bytes (text, image, PDF, etc.)
+- `pages_image` — download one rendered page image as bytes
 
-*Not available via MCP (binary response)*: `content`, `pages_image`.
+**Binary delivery and size cap** — `content` and `pages_image` return raw
+bytes, wrapped in the appropriate MCP content block:
+
+- `image/*` MIMEs → MCP `image` block (base64 + `mimeType`). Claude
+  reads these as vision input directly.
+- `text/*` and `application/json` → MCP embedded `resource` block with
+  `text` + `mimeType`. Preserves MIME signaling for markdown, source
+  code, JSON.
+- Other binary (PDF, octet-stream, etc.) → embedded `resource` block
+  with `blob` + `mimeType`. Claude cannot natively decode the bytes
+  today (PDF understanding goes through the page-image path); the
+  block is delivered for forward compatibility and host-side use.
+
+Both tools accept an optional `max_inline_bytes` parameter. Defaults
+to **8 MB** when unset; the server's absolute ceiling is **64 MB**.
+If the requested content exceeds your cap, the tool errors with the
+actual size — retry with a larger `max_inline_bytes` (up to 64 MB)
+to receive it inline. Above 64 MB, fetch via REST instead.
 
 ### OCR (`goodmem_ocr_*`)
 - `document` — extract text from a document using OCR

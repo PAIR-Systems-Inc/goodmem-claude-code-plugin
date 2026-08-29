@@ -818,10 +818,11 @@ class TestMcpApikeysCrud:
             listed = _tool_result(list_resp)
             assert isinstance(listed, (dict, list))
 
-            # Update (toggle to INACTIVE then back to ACTIVE)
+            # Update mutable metadata. Setting INACTIVE would permanently
+            # revoke the key, which is the same lifecycle transition exercised
+            # by the delete step below.
             update_resp = mcp_session.call_tool("goodmem_apikeys_update", {
                 "id": api_key_id,
-                "status": "INACTIVE",
                 "merge_labels": {"mcp-coverage": "updated"},
             })
             assert not _is_error_response(update_resp), (

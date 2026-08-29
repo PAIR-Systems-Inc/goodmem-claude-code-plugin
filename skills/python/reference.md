@@ -31,6 +31,7 @@ Constructor parameters:
 - `timeout` (float, default 30.0): HTTP timeout in seconds. Mutually exclusive with `http_client`.
 - `verify` (bool | str, default True): SSL certificate verification. Pass `False` to skip, or a file path to a CA bundle. Mutually exclusive with `http_client`.
 - `http_client` (httpx.Client): Pre-configured httpx client with base URL and auth headers. Mutually exclusive with all other params.
+- `stream_max_line_bytes` (int, default 8 MiB): Maximum size of a single NDJSON event on the streaming endpoints (`memories.retrieve`, `ping.stream`); a larger event raises `GoodMemError` instead of buffering without bound. `None` or `<= 0` uses the default. SDK-level — unlike the other params it MAY be combined with `http_client`.
 
 Package metadata:
 - `goodmem.__version__` — SDK package version (e.g., `"0.1.5"`)
@@ -38,11 +39,11 @@ Package metadata:
 
 ## API Reference
 
-Namespaces: `client.embedders`, `client.rerankers`, `client.llms`, `client.spaces`, `client.memories`, `client.ocr`, `client.system`, `client.users`, `client.admin`, `client.apikeys`, `client.ping`
+Namespaces: `client.embedders`, `client.rerankers`, `client.llms`, `client.spaces`, `client.memories`, `client.ocr`, `client.system`, `client.instance`, `client.users`, `client.service_identities`, `client.user_enrollments`, `client.admin`, `client.access_policy`, `client.apikeys`, `client.ping`
 
 ### client.embedders
 
-#### `embedders.create(display_name: str, model_identifier: str, api_key=None, api_path=None, credentials=None, description=None, dimensionality=None, distribution_type="DENSE", embedder_id=None, endpoint_url=None, labels=None, max_sequence_length=None, monitoring_endpoint=None, owner_id=None, provider_type=None, supported_modalities=None, version=None) -> EmbedderResponse`
+#### `embedders.create(display_name: str, model_identifier: str, api_key=None, api_path=None, credentials=None, dashscope_api_dialect=None, description=None, dimensionality=None, distribution_type="DENSE", embedder_id=None, endpoint_url=None, gemini_endpoint_config=None, labels=None, max_sequence_length=None, monitoring_endpoint=None, owner_id=None, provider_type=None, supported_modalities=None, version=None) -> EmbedderResponse`
 
 Create a new embedder
 
@@ -50,27 +51,30 @@ Parameters:
 - `display_name` (str): User-facing name of the embedder
 - `model_identifier` (str): The string that identifies the embedder. Usually the model identifier assigned by HuggingFace or the LLM provider, e.g., `"text-embedding-3-small"`...
 - `api_key` (str, optional): Converts a plain API key string to the full `EndpointAuthentication` structure (i.e. `{"kind": "CREDENTIAL_KIND_API_KEY", "api_key": {"inline_secre...
-- `api_path` (str, optional): API path for embeddings request (defaults: Cohere /v2/embed, TEI /embed, others /embeddings)
+- `api_path` (str, optional): Provider-relative API path. For Gemini this is an API version, not an embeddings operation path: the Developer API defaults to /v1beta and Google C...
 - `credentials` (EndpointAuthentication, optional): Structured credential payload describing how to authenticate with the provider. Required for SaaS providers; optional for local or proxy providers.
+- `dashscope_api_dialect` (str, optional): DashScope request and response API dialect. Valid only for the DASHSCOPE provider. Omit to infer the dialect from apiPath, the model catalog, or th...
 - `description` (str, optional): Description of the embedder
 - `dimensionality` (int · int32, optional): Output vector dimensions. Auto-inferred from `model_identifier` for known models (using `dimensions.default` from the model registry); required whe...
 - `distribution_type` (DistributionType, optional, default="DENSE"): The distribution type of the embedder's vector output. Defaults to `"DENSE"` when not specified.
 - `embedder_id` (str · uuid, optional): Optional client-provided UUID for idempotent creation. If not provided, server generates a new UUID. Returns ALREADY_EXISTS if ID is already in use.
-- `endpoint_url` (str, optional): Base URL for the embedding endpoint. Auto-inferred from `provider_type` for known providers.
+- `endpoint_url` (str, optional): Base URL for the embedding endpoint. Auto-inferred from `provider_type` for providers with one canonical base URL. Gemini has distinct Developer an...
+- `gemini_endpoint_config` (GeminiEndpointConfig, optional): Gemini backend routing. Valid only for the GEMINI provider. Omit to use the Developer API; when present, backend is required and the gRPC service v...
 - `labels` (dict[str, str], optional): User-defined labels for categorization
 - `max_sequence_length` (int · int32, optional): Maximum token length accepted by the model. Auto-inferred from `model_identifier` for known models; required when `model_identifier` is not in the ...
 - `monitoring_endpoint` (str, optional): Monitoring endpoint URL
-- `owner_id` (str · uuid, optional): Optional owner ID. If not provided, derived from the authentication context. Requires CREATE_EMBEDDER_ANY permission if specified.
-- `provider_type` (ProviderType, optional): Provider backend — one of `"OPENAI"`, `"COHERE"`, `"VOYAGE"`, `"JINA"`, `"VLLM"`, `"TEI"`, `"LLAMA_CPP"`. Use `"OPENAI"` for OpenAI-compatible endp...
+- `owner_id` (str · uuid, optional): Optional owner principal UUID. If omitted, defaults to the authenticated principal. CREATE_EMBEDDER is evaluated against the proposed embedder and ...
+- `provider_type` (ProviderType, optional): Provider backend — one of `"OPENAI"`, `"VLLM"`, `"TEI"`, `"LLAMA_CPP"`, `"VOYAGE"`, `"COHERE"`, `"JINA"`, `"DASHSCOPE"`, or `"GEMINI"`. Use `"GEMIN...
 - `supported_modalities` (list[Modality], optional): Modalities supported by this embedder (e.g. `["TEXT"]`). Auto-inferred from `model_identifier` for known models; required when `model_identifier` i...
 - `version` (str, optional): Version information
 
-#### `embedders.get(id: str) -> EmbedderResponse`
+#### `embedders.get(id: str, include_credentials=None) -> EmbedderResponse`
 
 Get an embedder by ID
 
 Parameters:
 - `id` (str): The unique identifier of the embedder to retrieve
+- `include_credentials` (bool, optional): Whether to return stored credentials. Also accepts include_credentials. Requires READ_EMBEDDER_CREDENTIALS in addition to READ_EMBEDDER.
 
 #### `embedders.list(label=None, owner_id=None, provider_type=None) -> list[EmbedderResponse]`
 
@@ -78,7 +82,7 @@ List embedders
 
 Parameters:
 - `label` (dict[str, str], optional): Filter by label key-value pairs. Label filters accept either label.<key>=<value> or label[key]=value (for example, label.environment=production or ...
-- `owner_id` (str, optional): Filter embedders by owner ID. With LIST_EMBEDDER_ANY permission, omitting this shows all accessible embedders; providing it filters by that owner. ...
+- `owner_id` (str, optional): Filter the already-authorized result set by owner principal UUID. Omitting this parameter does not bypass per-embedder READ_EMBEDDER filtering.
 - `provider_type` (ProviderType, optional): Filter embedders by provider type. Allowed values match the ProviderType schema.
 
 #### `embedders.update(id: str, request: UpdateEmbedderRequest | dict) -> EmbedderResponse`
@@ -98,7 +102,7 @@ Parameters:
 
 ### client.rerankers
 
-#### `rerankers.create(display_name: str, model_identifier: str, api_key=None, api_path=None, credentials=None, description=None, endpoint_url=None, labels=None, monitoring_endpoint=None, owner_id=None, provider_type=None, reranker_id=None, supported_modalities=None, version=None) -> RerankerResponse`
+#### `rerankers.create(display_name: str, model_identifier: str, api_key=None, api_path=None, credentials=None, dashscope_api_dialect=None, description=None, endpoint_url=None, labels=None, monitoring_endpoint=None, owner_id=None, provider_type=None, reranker_id=None, supported_modalities=None, version=None) -> RerankerResponse`
 
 Create a new reranker
 
@@ -108,22 +112,24 @@ Parameters:
 - `api_key` (str, optional): Converts a plain API key string to the full `EndpointAuthentication` structure (i.e. `{"kind": "CREDENTIAL_KIND_API_KEY", "api_key": {"inline_secre...
 - `api_path` (str, optional): API path for reranking request (defaults: Cohere `/v2/rerank`, Jina `/v1/rerank`, others `/rerank`).
 - `credentials` (EndpointAuthentication, optional): Structured credential payload describing how to authenticate with the provider. Required for SaaS providers; optional for local or proxy providers.
+- `dashscope_api_dialect` (str, optional): DashScope request and response API dialect. Valid only for the DASHSCOPE provider. Omit to infer the dialect from apiPath, the model catalog, or th...
 - `description` (str, optional): Description of the reranker
 - `endpoint_url` (str, optional): Base URL for the reranking endpoint. Auto-inferred from `provider_type` for known providers; required when `model_identifier` is not in the registry.
 - `labels` (dict[str, str], optional): User-defined labels for categorization
 - `monitoring_endpoint` (str, optional): Monitoring endpoint URL
-- `owner_id` (str · uuid, optional): Optional owner ID. If not provided, derived from the authentication context. Requires CREATE_RERANKER_ANY permission if specified.
-- `provider_type` (ProviderType, optional): Provider backend (e.g. `"COHERE"`, `"JINA"`). Auto-inferred from `model_identifier` for known models; required when `model_identifier` is not in th...
+- `owner_id` (str · uuid, optional): Optional owner principal UUID. If omitted, defaults to the authenticated principal. CREATE_RERANKER is evaluated against the proposed reranker and ...
+- `provider_type` (str, optional): Provider backend (e.g. `"COHERE"`, `"JINA"`). Auto-inferred from `model_identifier` for known models; required when `model_identifier` is not in th...
 - `reranker_id` (str · uuid, optional): Optional client-provided UUID for idempotent creation. If not provided, server generates a new UUID. Returns ALREADY_EXISTS if ID is already in use.
 - `supported_modalities` (list[Modality], optional): Modalities supported by this reranker (e.g. `["TEXT"]`). Auto-inferred from `model_identifier` for known models; defaults to `["TEXT"]` on the serv...
 - `version` (str, optional): Version information
 
-#### `rerankers.get(id: str) -> RerankerResponse`
+#### `rerankers.get(id: str, include_credentials=None) -> RerankerResponse`
 
 Get a reranker by ID
 
 Parameters:
 - `id` (str): The unique identifier of the reranker to retrieve
+- `include_credentials` (bool, optional): Whether to return stored credentials. Also accepts include_credentials. Requires READ_RERANKER_CREDENTIALS in addition to READ_RERANKER.
 
 #### `rerankers.list(label=None, owner_id=None, provider_type=None) -> list[RerankerResponse]`
 
@@ -131,7 +137,7 @@ List rerankers
 
 Parameters:
 - `label` (dict[str, str], optional): Filter by label key-value pairs. Label filters accept either label.<key>=<value> or label[key]=value (for example, label.environment=production or ...
-- `owner_id` (str, optional): Filter rerankers by owner ID. With LIST_RERANKER_ANY permission, omitting this shows all accessible rerankers; providing it filters by that owner. ...
+- `owner_id` (str, optional): Filter the already-authorized result set by owner principal UUID. Omitting this parameter does not bypass per-reranker READ_RERANKER filtering.
 - `provider_type` (ProviderType, optional): Filter rerankers by provider type. Allowed values match the ProviderType schema.
 
 #### `rerankers.update(id: str, request: UpdateRerankerRequest | dict) -> RerankerResponse`
@@ -151,7 +157,7 @@ Parameters:
 
 ### client.llms
 
-#### `llms.create(display_name: str, model_identifier: str, api_key=None, api_path=None, capabilities=None, client_config=None, credentials=None, default_sampling_params=None, description=None, endpoint_url=None, labels=None, llm_id=None, max_context_length=None, monitoring_endpoint=None, owner_id=None, provider_type=None, supported_modalities=None, version=None) -> CreateLLMResponse`
+#### `llms.create(display_name: str, model_identifier: str, api_key=None, api_path=None, capabilities=None, client_config=None, credentials=None, dashscope_api_dialect=None, default_sampling_params=None, description=None, endpoint_url=None, labels=None, llm_id=None, max_context_length=None, monitoring_endpoint=None, owner_id=None, provider_type=None, supported_modalities=None, version=None) -> CreateLLMResponse`
 
 Create a new LLM
 
@@ -163,6 +169,7 @@ Parameters:
 - `capabilities` (LLMCapabilities, optional): LLM capabilities defining supported features and modes. Optional — server infers capabilities from model identifier if not provided.
 - `client_config` (dict[str, Any], optional): Provider-specific client configuration as flexible JSON structure
 - `credentials` (EndpointAuthentication, optional): Structured credential payload describing how to authenticate with the provider. Required for SaaS providers; optional for local or proxy providers.
+- `dashscope_api_dialect` (str, optional): DashScope request and response API dialect. Valid only for the DASHSCOPE provider. When omitted, a recognized apiPath determines the dialect; other...
 - `default_sampling_params` (LLMSamplingParams, optional): Default sampling parameters for generation requests
 - `description` (str, optional): Description of the LLM
 - `endpoint_url` (str, optional): Base URL for the LLM endpoint (OpenAI-compatible base, typically ends with `/v1`). Auto-inferred from `provider_type` for known providers; required...
@@ -170,17 +177,18 @@ Parameters:
 - `llm_id` (str · uuid, optional): Optional client-provided UUID for idempotent creation. If not provided, server generates a new UUID. Returns ALREADY_EXISTS if ID is already in use.
 - `max_context_length` (int · int32, optional): Maximum context window size in tokens. Auto-inferred from `model_identifier` for known models; recommended when `model_identifier` is not in the re...
 - `monitoring_endpoint` (str, optional): Monitoring endpoint URL
-- `owner_id` (str · uuid, optional): Optional owner ID. If not provided, derived from the authentication context. Requires CREATE_LLM_ANY permission if specified.
+- `owner_id` (str · uuid, optional): Optional owner principal UUID. If omitted, defaults to the authenticated principal. CREATE_LLM is evaluated against the proposed LLM and owner.
 - `provider_type` (LLMProviderType, optional): Provider backend — one of `"OPENAI"`, `"LITELLM_PROXY"`, `"OPEN_ROUTER"`, `"VLLM"`, `"OLLAMA"`, `"LLAMA_CPP"`, `"CUSTOM_OPENAI_COMPATIBLE"`. Use `"...
 - `supported_modalities` (list[Modality], optional): Modalities supported by this LLM (e.g. `["TEXT"]`). Auto-inferred from `model_identifier` for known models; defaults to `["TEXT"]` on the server if...
 - `version` (str, optional): Version information
 
-#### `llms.get(id: str) -> LLMResponse`
+#### `llms.get(id: str, include_credentials=None) -> LLMResponse`
 
 Get an LLM by ID
 
 Parameters:
 - `id` (str): The unique identifier of the LLM to retrieve
+- `include_credentials` (bool, optional): Whether to return stored credentials. Also accepts include_credentials. Requires READ_LLM_CREDENTIALS in addition to READ_LLM.
 
 #### `llms.list(label=None, owner_id=None, provider_type=None) -> list[LLMResponse]`
 
@@ -188,7 +196,7 @@ List LLMs
 
 Parameters:
 - `label` (dict[str, str], optional): Filter by label key-value pairs. Label filters accept either label.<key>=<value> or label[key]=value (for example, label.environment=production or ...
-- `owner_id` (str, optional): Filter LLMs by owner ID. With LIST_LLM_ANY permission, omitting this shows all accessible LLMs; providing it filters by that owner. With LIST_LLM_O...
+- `owner_id` (str, optional): Filter the already-authorized result set by owner principal UUID. Omitting this parameter does not bypass per-LLM READ_LLM filtering.
 - `provider_type` (LLMProviderType, optional): Filter LLMs by provider type. Allowed values match the LLMProviderType schema.
 
 #### `llms.update(id: str, request: LLMUpdateRequest | dict) -> LLMResponse`
@@ -208,7 +216,7 @@ Parameters:
 
 ### client.spaces
 
-#### `spaces.create(name: str, space_embedders: list[SpaceEmbedderConfig], default_chunking_config={'recursive': {'chunkSize': 512, 'chunkOverlap': 64, 'keepStrategy': 'KEEP_END', 'lengthMeasurement': 'CHARACTER_COUNT'}}, labels=None, owner_id=None, public_read=None, space_id=None) -> Space`
+#### `spaces.create(name: str, space_embedders: list[SpaceEmbedderConfig], default_chunking_config={'recursive': {'chunkSize': 512, 'chunkOverlap': 64, 'keepStrategy': 'KEEP_END', 'lengthMeasurement': 'CHARACTER_COUNT'}}, labels=None, owner_id=None, space_id=None) -> Space`
 
 Create a new Space
 
@@ -217,8 +225,7 @@ Parameters:
 - `space_embedders` (list[SpaceEmbedderConfig]): List of embedder configurations to associate with this space. At least one embedder configuration is required. Each specifies an embedder ID and a ...
 - `default_chunking_config` (ChunkingConfiguration, optional, default={'recursive': {'chunkSize': 512, 'chunkOverlap': 64, 'keepStrategy': 'KEEP_END', 'lengthMeasurement': 'CHARACTER_COUNT'}}): Default strategy to chunk any memory ingested into this space. Can be overridden by per-memory chunking strategy.
 - `labels` (dict[str, str], optional): A set of key-value pairs to categorize or tag the space. Used for filtering and organizational purposes.
-- `owner_id` (str · uuid, optional): Optional owner ID. If not provided, derived from the authentication context. Requires CREATE_SPACE_ANY permission if specified.
-- `public_read` (bool, optional): Indicates if the space and its memories can be read by unauthenticated users or users other than the owner. Defaults to false.
+- `owner_id` (str · uuid, optional): Optional owner principal UUID. If omitted, defaults to the authenticated principal. CREATE_SPACE is evaluated against the proposed space and owner.
 - `space_id` (str · uuid, optional): Optional client-provided UUID for idempotent creation. If not provided, server generates a new UUID. Returns ALREADY_EXISTS if ID is already in use.
 
 #### `spaces.get(id: str) -> Space`
@@ -235,7 +242,7 @@ List spaces
 Parameters:
 - `label` (dict[str, str], optional): Filter by label key-value pairs. Label filters accept either label.<key>=<value> or label[key]=value (for example, label.environment=production or ...
 - `name_filter` (str, optional): Filter spaces by name using glob pattern matching.
-- `owner_id` (str, optional): Filter spaces by owner ID. With LIST_SPACE_ANY permission and ownerId omitted, returns all visible spaces. Otherwise returns caller-owned spaces on...
+- `owner_id` (str, optional): Filter the already-authorized result set by owner principal UUID. Omitting this parameter does not bypass per-space READ_SPACE filtering.
 - `sort_by` (str, optional): Field to sort by: `'created_time'`, `'updated_time'`, or `'name'` (default: `'created_time'`). Unsupported values return INVALID_ARGUMENT.
 - `sort_order` (SortOrder, optional): Sort order (`ASCENDING` or `DESCENDING`, default: `DESCENDING`).
 - `page_size` (int, optional): Number of results per page.
@@ -257,6 +264,14 @@ Delete a space
 Parameters:
 - `id` (str): The unique identifier of the space to delete
 
+#### `spaces.transfer_ownership(id: str, new_owner_id: str) -> TransferSpaceOwnershipResponse`
+
+Transfer ownership of a space
+
+Parameters:
+- `id` (str): UUID of the existing space to transfer
+- `new_owner_id` (str · uuid): Existing principal UUID that will become the new owner.
+
 ### client.memories
 
 #### `memories.create(space_id: str, chunking_config=None, content_type=None, extract_page_images=None, file_path=None, memory_id=None, metadata=None, original_content=None, original_content_b64=None, original_content_ref=None) -> Memory`
@@ -275,7 +290,7 @@ Parameters:
 - `original_content_b64` (str, optional): Original content as base64-encoded binary data. Mutually exclusive with `file_path` and `original_content`.
 - `original_content_ref` (str, optional): Reference to external content location. Functions as a metadata field. Does not make Goodmem download the content from the URL and use it to create...
 
-#### `memories.retrieve(message: str, chronological_resort=None, context=None, fetch_memory=None, fetch_memory_content=None, gen_token_budget=None, hnsw=None, llm_id=None, llm_temp=None, logging=None, max_results=None, post_processor=None, prompt=None, relevance_threshold=None, requested_size=None, reranker_id=None, space_ids=None, space_keys=None, stream=True, sys_prompt=None) -> RetrieveMemoryStream | list[RetrieveMemoryEvent]`
+#### `memories.retrieve(message: str, chronological_resort=None, context=None, fetch_memory=None, fetch_memory_content=None, gen_token_budget=None, hnsw=None, llm_id=None, llm_temp=None, logging=None, max_results=None, output_budget=None, post_processor=None, prompt=None, relevance_threshold=None, requested_size=None, reranker_id=None, space_ids=None, space_keys=None, stream=True, sys_prompt=None) -> RetrieveMemoryStream | list[RetrieveMemoryEvent]`
 
 Retrieve Memories
 
@@ -289,8 +304,9 @@ Parameters:
 - `hnsw` (HnswOptions, optional): Optional request-level HNSW tuning overrides. Advanced usage; available on POST retrieve.
 - `llm_id` (str, optional): The ID of the LLM to process the retrieved memories, e.g., RAG. Assembles the nested `PostProcessor` structure automatically. If unset, no LLM will...
 - `llm_temp` (float, optional): LLM temperature for post-processing. Valid range is 0.0-2.0. Defaults to 0.3 on the server. Only applies when `llm_id` is set.
-- `logging` (LoggingOptions, optional): Optional durable request logging block for POST retrieve requests. Supply logging.enabled=true to opt in, and optionally attach flat scalar logging...
+- `logging` (LoggingOptions, optional): Optional durable request logging block for POST retrieve requests. Set logging.enabled=true to opt in, or supply flat scalar logging.callerAttribut...
 - `max_results` (int, optional): Maximum number of retrieved memories to return. Must be positive. Defaults to 10 on the server. Only applies when `llm_id` or `reranker_id` is set.
+- `output_budget` (TokenBudget, optional): Optional soft cap for generated retrieve replies. When set to a positive token count, chat post-processing uses this value as the LLM completion-to...
 - `post_processor` (PostProcessor, optional): Optional post-processor configuration to transform retrieval results.
 - `prompt` (str, optional): Custom prompt for LLM post-processing. If unset, the server's default prompt is used. Only applies when `llm_id` is set.
 - `relevance_threshold` (float, optional): Minimum relevance score for retrieved memories. Only applies when `reranker_id` is set.
@@ -411,19 +427,170 @@ Retrieve server build metadata
 
 Initialize the system
 
+### client.instance
+
+#### `instance.get() -> GoodMemInstance`
+
+Get the GoodMem instance
+
 ### client.users
 
-#### `users.get(email=None, id=None) -> UserResponse`
+#### `users.create(email: str, display_name=None, labels=None, user_id=None, username=None) -> UserResponse`
+
+Create a human user
+
+Parameters:
+- `email` (str): Unique, nonempty email address.
+- `display_name` (str, optional): Optional human-facing display name.
+- `labels` (dict[str, str], optional): Optional labels for organization and filtering. At most 20 entries; keys and values contain at most 255 characters; keys use [a-z0-9._-].
+- `user_id` (str · uuid, optional): Optional client-provided user UUID; generated by the server when omitted.
+- `username` (str, optional): Optional unique username.
+
+#### `users.get(email=None, id=None, include_deleted=None) -> UserResponse`
 
 Get a user by ID or email
 
 Parameters:
 - `email` (str, optional): The user's email address. Mutually exclusive with `id` — exactly one must be provided.
 - `id` (str, optional): The user's UUID. Mutually exclusive with `email` — exactly one must be provided.
+- `include_deleted` (bool, optional): Permit an authorized read of a permanent tombstone
+
+#### `users.list(include_deleted=None, include_enrollment_summary=None, label=None, max_results=None, next_token=None) -> Page[UserResponse]`
+
+List human users
+
+Parameters:
+- `include_deleted` (bool, optional): Include readable permanent tombstones
+- `include_enrollment_summary` (bool, optional): Request non-secret enrollment posture on active rows where the caller also has MANAGE_USER_ENROLLMENT
+- `label` (dict[str, str], optional): Filter by label key-value pairs. Label filters accept either label.<key>=<value> or label[key]=value (for example, label.environment=production or ...
+- `max_results` (int · int32, optional): Page size; defaults to 50 and must be between 1 and 1000
+- `next_token` (str, optional): Opaque continuation token
+
+#### `users.update(id: str, request: UpdateUserRequest | dict) -> UserResponse`
+
+Update a human user
+
+Parameters:
+- `id` (str): The unique identifier of the resource to update.
+- `request` (UpdateUserRequest | dict): The update payload. Accepts a `UpdateUserRequest` instance or a plain dict with the same fields. Only specified fields will be modified.
+
+#### `users.delete(id: str) -> None`
+
+Delete a human user
+
+Parameters:
+- `id` (str): User UUID
+
+#### `users.create_enrollment(user_id: str, enrollment_id=None, rotate_existing=None) -> CreateUserEnrollmentResponse`
+
+Create a human-user enrollment
+
+Parameters:
+- `user_id` (str): Human-user UUID
+- `enrollment_id` (str · uuid, optional): Optional client-provided enrollment UUID; generated when omitted.
+- `rotate_existing` (bool, optional): Whether an existing live enrollment may be revoked and atomically replaced.
+
+#### `users.get_by_username(username: str, include_deleted=None) -> UserResponse`
+
+Get user by username
+
+Parameters:
+- `username` (str): Exact username
+- `include_deleted` (bool, optional): Permit an authorized read of a permanent tombstone
+
+#### `users.get_enrollment(enrollment_id: str, user_id: str) -> UserEnrollmentResponse`
+
+Get a human-user enrollment
+
+Parameters:
+- `enrollment_id` (str): Enrollment UUID
+- `user_id` (str): Human-user UUID
+
+#### `users.list_enrollments(user_id: str, max_results=None, next_token=None) -> Page[UserEnrollmentResponse]`
+
+List a human user's enrollments
+
+Parameters:
+- `user_id` (str): Human-user UUID
+- `max_results` (int · int32, optional): Page size; defaults to 50 and must be between 1 and 1000
+- `next_token` (str, optional): Opaque continuation token
 
 #### `users.me() -> UserResponse`
 
 Get current user profile
+
+#### `users.revoke_enrollment(enrollment_id: str, user_id: str) -> None`
+
+Revoke a human-user enrollment
+
+Parameters:
+- `enrollment_id` (str): Enrollment UUID
+- `user_id` (str): Human-user UUID
+
+### client.service_identities
+
+#### `service_identities.create(display_name: str, description=None, labels=None, service_identity_id=None) -> ServiceIdentityResponse`
+
+Create a service identity
+
+Parameters:
+- `display_name` (str): Globally unique, nonblank operator-facing name.
+- `description` (str, optional): Optional operator description.
+- `labels` (dict[str, str], optional): Optional labels for organization and filtering. At most 20 entries; keys and values contain at most 255 characters; keys use [a-z0-9._-].
+- `service_identity_id` (str · uuid, optional): Optional client-provided UUID; generated by the server when omitted.
+
+#### `service_identities.get(id: str, include_deleted=None) -> ServiceIdentityResponse`
+
+Get a service identity
+
+Parameters:
+- `id` (str): Service-identity UUID
+- `include_deleted` (bool, optional): Permit an authorized read of a permanent tombstone
+
+#### `service_identities.list(include_deleted=None, label=None, max_results=None, next_token=None, owner_principal_id=None) -> Page[ServiceIdentityResponse]`
+
+List service identities
+
+Parameters:
+- `include_deleted` (bool, optional): Include readable permanent tombstones
+- `label` (dict[str, str], optional): Filter by label key-value pairs. Label filters accept either label.<key>=<value> or label[key]=value (for example, label.environment=production or ...
+- `max_results` (int · int32, optional): Page size; defaults to 50 and must be between 1 and 1000
+- `next_token` (str, optional): Opaque continuation token
+- `owner_principal_id` (str, optional): Exact current administrative-owner principal UUID
+
+#### `service_identities.update(id: str, request: UpdateServiceIdentityRequest | dict) -> ServiceIdentityResponse`
+
+Update a service identity
+
+Parameters:
+- `id` (str): The unique identifier of the resource to update.
+- `request` (UpdateServiceIdentityRequest | dict): The update payload. Accepts a `UpdateServiceIdentityRequest` instance or a plain dict with the same fields. Only specified fields will be modified.
+
+#### `service_identities.delete(id: str) -> None`
+
+Delete a service identity
+
+Parameters:
+- `id` (str): Service-identity UUID
+
+#### `service_identities.transfer_ownership(id: str, new_owner_id: str) -> TransferServiceIdentityOwnershipResponse`
+
+Transfer service-identity ownership
+
+Parameters:
+- `id` (str): Service-identity UUID
+- `new_owner_id` (str · uuid): Existing principal UUID that will become the new owner.
+
+### client.user_enrollments
+
+#### `user_enrollments.complete(enrollment_token: str, api_key_id=None, raw_api_key=None) -> CompleteUserEnrollmentResponse`
+
+Complete human-user enrollment
+
+Parameters:
+- `enrollment_token` (str): Required one-time enrollment credential. Never log or persist it.
+- `api_key_id` (str · uuid, optional): Optional client-generated API-key UUID retained for exact retries. Must be supplied together with rawApiKey, or both fields must be omitted.
+- `raw_api_key` (str, optional): Optional canonical client-generated API key. Must be supplied together with apiKeyId, never logged, and retained for exact retries; omit both field...
 
 ### client.admin
 
@@ -435,6 +602,13 @@ Parameters:
 - `reason` (str, optional): Human-readable reason for initiating drain mode.
 - `timeout_sec` (int · int32, optional): Maximum seconds to wait for the server to quiesce before returning.
 - `wait_for_quiesce` (bool, optional): If true, wait for in-flight requests to complete and the server to reach QUIESCED before responding.
+
+#### `admin.transfer_instance_ownership(new_owner_id: str) -> TransferInstanceOwnershipResponse`
+
+Transfer GoodMem instance ownership
+
+Parameters:
+- `new_owner_id` (str · uuid): Existing principal UUID that will become the new owner.
 
 #### `admin.background_jobs.purge(older_than: str, dry_run=None, limit=None, statuses=None) -> AdminPurgeJobsResponse`
 
@@ -450,20 +624,162 @@ Parameters:
 
 Reload the active license from disk
 
+#### `admin.retrieve_memory_log_policies.create(condition: RetrieveMemoryLogPolicyCondition, display_name: str, active_from=None, active_until=None, description=None, labels=None, policy_id=None) -> RetrieveMemoryLogPolicy`
+
+Create a RetrieveMemory log policy
+
+Parameters:
+- `condition` (RetrieveMemoryLogPolicyCondition): Policy match condition.
+- `display_name` (str): Human-readable policy name.
+- `active_from` (int · int64, optional): Inclusive activation time in milliseconds since epoch.
+- `active_until` (int · int64, optional): Exclusive deactivation time in milliseconds since epoch.
+- `description` (str, optional): Optional operator description.
+- `labels` (dict[str, str], optional): Operator labels for listing and administration.
+- `policy_id` (str · uuid, optional): Optional client-provided policy UUID.
+
+#### `admin.retrieve_memory_log_policies.delete(id: str, reason=None) -> RetrieveMemoryLogPolicy`
+
+Delete a RetrieveMemory log policy
+
+Parameters:
+- `id` (str): The UUID of the policy to delete
+- `reason` (str, optional): Optional tombstone reason.
+
+#### `admin.retrieve_memory_log_policies.get(id: str, include_deleted=None) -> RetrieveMemoryLogPolicy`
+
+Get a RetrieveMemory log policy
+
+Parameters:
+- `id` (str): The UUID of the policy to retrieve
+- `include_deleted` (bool, optional): Whether to include tombstoned policies. Also accepts include_deleted.
+
+#### `admin.retrieve_memory_log_policies.list(active_at=None, include_deleted=None, label=None, max_results=None, name_filter=None, next_token=None, sort_by=None, sort_order=None) -> Page[RetrieveMemoryLogPolicy]`
+
+List RetrieveMemory log policies
+
+Parameters:
+- `active_at` (int · int64, optional): Only return policies active at this millisecond epoch timestamp. Also accepts active_at.
+- `include_deleted` (bool, optional): Whether to include tombstoned policies. Also accepts include_deleted.
+- `label` (dict[str, str], optional): Filter by label key-value pairs. Label filters accept either label.<key>=<value> or label[key]=value (for example, label.environment=production or ...
+- `max_results` (int · int32, optional): Maximum number of policies to return. Also accepts max_results.
+- `name_filter` (str, optional): Case-insensitive substring filter on policy display names. Also accepts name_filter.
+- `next_token` (str, optional): Opaque pagination token returned by the previous list response. Also accepts next_token.
+- `sort_by` (str, optional): Sort field: created_at, updated_at, or display_name. Also accepts sort_by.
+- `sort_order` (SortOrder, optional): Sort order. Also accepts sort_order.
+
+### client.access_policy
+
+#### `access_policy.check(checks: list[AuthorizationCheck]) -> CheckAuthorizationsResponse`
+
+Check effective authorization
+
+Parameters:
+- `checks` (list[AuthorizationCheck]): Concrete checks evaluated in request order.
+
+#### `access_policy.grants.create(audience: GrantAudience, rule: AccessPolicyRule, grant_id=None) -> AuthorizationGrant`
+
+Create an authorization grant
+
+Parameters:
+- `audience` (GrantAudience): Audience receiving the grant.
+- `rule` (AccessPolicyRule): Authorization descriptor to grant.
+- `grant_id` (str · uuid, optional): Optional caller-provided grant UUID.
+
+#### `access_policy.grants.delete(id: str) -> AuthorizationGrant`
+
+Revoke an authorization grant
+
+Parameters:
+- `id` (str): Grant UUID
+
+#### `access_policy.grants.get(id: str, include_revoked=None) -> AuthorizationGrant`
+
+Get an authorization grant
+
+Parameters:
+- `id` (str): Grant UUID
+- `include_revoked` (bool, optional): Include a revoked historical row
+
+#### `access_policy.grants.list(resource_kind: str, include_revoked=None, max_results=None, next_token=None, resource_id=None) -> Page[AuthorizationGrant]`
+
+List authorization grants
+
+Parameters:
+- `resource_kind` (str): Required target resource kind
+- `include_revoked` (bool, optional): Include revoked history
+- `max_results` (int · int32, optional): Page size; 0 or omission uses the default of 50, maximum 1,000
+- `next_token` (str, optional): Opaque continuation token
+- `resource_id` (str, optional): Required target UUID except when resourceKind is INSTANCE
+
+#### `access_policy.role_assignments.create(assigned_resource: RoleAssignmentTarget, principal_id: str, role: str, role_assignment_id=None) -> RoleAssignment`
+
+Assign a scoped role
+
+Parameters:
+- `assigned_resource` (RoleAssignmentTarget): INSTANCE or SPACE boundary receiving the assignment.
+- `principal_id` (str · uuid): Active principal receiving the role.
+- `role` (str): Code-defined non-ROOT role to assign.
+- `role_assignment_id` (str · uuid, optional): Optional caller-provided role-assignment UUID.
+
+#### `access_policy.role_assignments.delete(id: str) -> RoleAssignment`
+
+Revoke a scoped role assignment
+
+Parameters:
+- `id` (str): Role-assignment UUID
+
+#### `access_policy.role_assignments.get(id: str, include_revoked=None) -> RoleAssignment`
+
+Get a scoped role assignment
+
+Parameters:
+- `id` (str): Role-assignment UUID
+- `include_revoked` (bool, optional): Include a revoked historical row
+
+#### `access_policy.role_assignments.list(resource_kind: str, include_revoked=None, max_results=None, next_token=None, resource_id=None) -> Page[RoleAssignment]`
+
+List scoped role assignments
+
+Parameters:
+- `resource_kind` (str): Required INSTANCE or SPACE kind
+- `include_revoked` (bool, optional): Include revoked history
+- `max_results` (int · int32, optional): Page size; 0 or omission uses the default of 50, maximum 1,000
+- `next_token` (str, optional): Opaque continuation token
+- `resource_id` (str, optional): Required space UUID; omitted for INSTANCE
+
 ### client.apikeys
 
-#### `apikeys.create(api_key_id=None, expires_at=None, labels=None) -> CreateApiKeyResponse`
+#### `apikeys.create(api_key_id=None, authority_mode=None, ceiling=None, expires_at=None, labels=None, subject_principal_id=None, valid_from=None) -> CreateApiKeyResponse`
 
 Create a new API key
 
 Parameters:
 - `api_key_id` (str · uuid, optional): Optional client-provided UUID for idempotent creation. If not provided, server generates a new UUID. Returns ALREADY_EXISTS if ID is already in use.
-- `expires_at` (int · int64, optional): Expiration timestamp in milliseconds since epoch. If not provided, the key does not expire.
-- `labels` (dict[str, str], optional): Key-value pairs of metadata associated with the API key. Used for organization and filtering.
+- `authority_mode` (ApiKeyAuthorityMode, optional): Authority mode. Omit to create a self-issued human key that inherits live authority. A scoped issuing credential may create only SCOPED children.
+- `ceiling` (list[AccessPolicyRule], optional): Immutable authorization ceiling. Required and nonempty for SCOPED; omitted for INHERIT_SUBJECT, with at most 1,000 rules. Every rule must be covere...
+- `expires_at` (int · int64, optional): Exclusive expiration timestamp in milliseconds since epoch. It must be later than validFrom, which defaults to issuance time; if omitted, the key d...
+- `labels` (dict[str, str], optional): Key-value pairs of metadata associated with the API key. Used for organization and filtering. At most 20 entries; keys and values contain at most 2...
+- `subject_principal_id` (str · uuid, optional): Principal authenticated by this key. Omit to use the authenticated principal.
+- `valid_from` (int · int64, optional): Inclusive activation time in epoch milliseconds. Omit to activate at issuance time.
 
-#### `apikeys.list() -> list[ApiKeyResponse]`
+#### `apikeys.get(id: str) -> ApiKeyResponse`
+
+Get an API key
+
+Parameters:
+- `id` (str): API-key UUID
+
+#### `apikeys.list(lifecycle_state=None, max_results=None, next_token=None, owner_principal_id=None, subject_principal_id=None, view=None) -> Page[ApiKeyResponse]`
 
 List API keys
+
+Parameters:
+- `lifecycle_state` (str, optional): Filter by precise lifecycle state
+- `max_results` (int · int32, optional): Page size; FULL defaults to 10 and permits at most 20, while BASIC defaults to 50 and permits at most 1,000
+- `next_token` (str, optional): Opaque continuation token returned by the preceding page
+- `owner_principal_id` (str, optional): Filter by exact administrative-owner UUID
+- `subject_principal_id` (str, optional): Filter by exact subject-principal UUID
+- `view` (str, optional): Metadata projection; omission defaults to FULL
 
 #### `apikeys.update(id: str, request: UpdateApiKeyRequest | dict) -> ApiKeyResponse`
 
@@ -516,7 +832,7 @@ Parameters:
 
 The SDK provides convenience parameters that simplify common patterns.
 
-- **`embedders.create()`**: `api_key` -> `credentials` — Converts a plain API key string to the full `EndpointAuthentication` structure (i.e. `{"kind": "CREDENTIAL_KIND_API_KEY", "api_key": {"inline_secret": "sk-..."}}`). Most SaaS/cloud and/or proprietary providers (e.g., OpenAI, Cohere, Jina, Voyage, OpenRouter, Gemini) require an API key.
+- **`embedders.create()`**: `api_key` -> `credentials` — Converts a plain API key string to the full `EndpointAuthentication` structure (i.e. `{"kind": "CREDENTIAL_KIND_API_KEY", "api_key": {"inline_secret": "sk-..."}}`). Use this for providers configured with API-key authentication. Gemini also supports ADC, which must be supplied through `credentials` instead.
 - **`llms.create()`**: `api_key` -> `credentials` — Converts a plain API key string to the full `EndpointAuthentication` structure (i.e. `{"kind": "CREDENTIAL_KIND_API_KEY", "api_key": {"inline_secret": "sk-..."}}`).
 - **`memories.batch_create()`**: `requests` — List of memory creation requests. Import via `from goodmem.api.memories import MemoryCreationRequest`. Unlike the raw `JsonMemoryCreationRequest`, `content_type` is optional and auto-inferred for text content.
 - **`memories.create()`**: `file_path` — Path to a local file to upload. Mutually exclusive with `original_content` and `original_content_b64`.
@@ -543,14 +859,14 @@ The SDK provides convenience parameters that simplify common patterns.
 
 Pass `model_identifier` to create methods. The SDK auto-infers `provider_type`, `endpoint_url`, `dimensionality`, etc.
 
-**Embedders** (29):
-`text-embedding-3-large`, `text-embedding-3-small`, `embed-v4.0`, `embed-english-v3.0`, `embed-english-light-v3.0`, `embed-multilingual-v3.0`, `embed-multilingual-light-v3.0`, `jina-embeddings-v4`, `jina-embeddings-v3`, `jina-embeddings-v2-base-en`, `jina-embeddings-v2-base-es`, `jina-embeddings-v2-base-de`, `jina-embeddings-v2-base-zh`, `jina-embeddings-v2-base-code`, `jina-clip-v1`, `jina-clip-v2`, `voyage-4-large`, `voyage-4`, `voyage-4-lite`, `voyage-code-3`, `voyage-3-large`, `voyage-3.5`, `voyage-3.5-lite`, `voyage-3`, `voyage-3-lite`, `voyage-finance-2`, `voyage-law-2`, `voyage-code-2`, `voyage-multilingual-2`
+**Embedders** (42):
+`text-embedding-3-large`, `text-embedding-3-small`, `embed-v4.0`, `embed-english-v3.0`, `embed-english-light-v3.0`, `embed-multilingual-v3.0`, `embed-multilingual-light-v3.0`, `jina-embeddings-v5-text-small`, `jina-embeddings-v5-text-nano`, `jina-embeddings-v5-omni-small`, `jina-embeddings-v5-omni-nano`, `jina-embeddings-v4`, `jina-code-embeddings-1.5b`, `jina-code-embeddings-0.5b`, `jina-embeddings-v3`, `jina-embeddings-v2-base-en`, `jina-embeddings-v2-base-es`, `jina-embeddings-v2-base-de`, `jina-embeddings-v2-base-zh`, `jina-embeddings-v2-base-code`, `jina-clip-v1`, `jina-clip-v2`, `voyage-4-large`, `voyage-4`, `voyage-4-lite`, `voyage-code-4`, `voyage-code-3`, `voyage-3-large`, `voyage-3.5`, `voyage-3.5-lite`, `voyage-3`, `voyage-3-lite`, `voyage-finance-2`, `voyage-law-2`, `voyage-code-2`, `voyage-multilingual-2`, `text-embedding-v4`, `text-embedding-v3`, `tongyi-embedding-vision-plus`, `tongyi-embedding-vision-flash`, `qwen3-vl-embedding`, `multimodal-embedding-v1`
 
-**LLMs** (19):
-`gpt-5.2`, `gpt-5.2-pro`, `gpt-5.1`, `gpt-5`, `gpt-5-mini`, `gpt-5-nano`, `o3`, `o3-mini`, `o4-mini`, `gpt-4.1`, `gpt-4.1-mini`, `gpt-4.1-nano`, `gpt-4o`, `gpt-4o-mini`, `gpt-4-turbo`, `gpt-3.5-turbo`, `o1`, `o1-mini`, `o1-preview`
+**LLMs** (32):
+`gpt-5.2`, `gpt-5.2-pro`, `gpt-5.1`, `gpt-5`, `gpt-5-mini`, `gpt-5-nano`, `o3`, `o3-mini`, `o4-mini`, `gpt-4.1`, `gpt-4.1-mini`, `gpt-4.1-nano`, `gpt-4o`, `gpt-4o-mini`, `gpt-4-turbo`, `gpt-3.5-turbo`, `o1`, `o1-mini`, `o1-preview`, `qwen-max`, `qwen-plus`, `qwen-turbo`, `qwen-long`, `qwen3-max`, `qwen3-coder-plus`, `qwen3.7-max`, `qwen3.7-plus`, `qwen3.8-max`, `qwen3.6-flash`, `qwen-vl-max`, `qwen-vl-plus`, `deepseek-v4-pro`
 
-**Rerankers** (16):
-`rerank-v4.0-pro`, `rerank-v4.0-fast`, `rerank-v3.5`, `rerank-english-v3.0`, `rerank-multilingual-v3.0`, `jina-reranker-v3`, `jina-reranker-v2-base-multilingual`, `jina-reranker-v1-base-en`, `jina-reranker-v1-turbo-en`, `jina-reranker-v1-tiny-en`, `rerank-2.5`, `rerank-2.5-lite`, `rerank-2`, `rerank-2-lite`, `rerank-1`, `rerank-lite-1`
+**Rerankers** (19):
+`rerank-v4.0-pro`, `rerank-v4.0-fast`, `rerank-v3.5`, `rerank-english-v3.0`, `rerank-multilingual-v3.0`, `jina-reranker-v3`, `jina-reranker-v2-base-multilingual`, `jina-reranker-v1-base-en`, `jina-reranker-v1-turbo-en`, `jina-reranker-v1-tiny-en`, `rerank-2.5`, `rerank-2.5-lite`, `rerank-2`, `rerank-2-lite`, `rerank-1`, `rerank-lite-1`, `qwen3-vl-rerank`, `gte-rerank-v2`, `qwen3-rerank`
 
 ## Commonly-used types
 
