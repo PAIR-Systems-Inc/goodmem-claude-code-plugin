@@ -34,7 +34,7 @@ Constructor parameters:
 - `stream_max_line_bytes` (int, default 8 MiB): Maximum size of a single NDJSON event on the streaming endpoints (`memories.retrieve`, `ping.stream`); a larger event raises `GoodMemError` instead of buffering without bound. `None` or `<= 0` uses the default. SDK-level — unlike the other params it MAY be combined with `http_client`.
 
 Package metadata:
-- `goodmem.__version__` — SDK package version (e.g., `"0.1.32"`)
+- `goodmem.__version__` — SDK package version (e.g., `"0.1.34"`)
 - `goodmem.__based_on_goodmem_commit__` — GoodMem server commit hash this SDK was generated from. Useful for debugging version mismatches between SDK and server.
 
 ## API Reference
