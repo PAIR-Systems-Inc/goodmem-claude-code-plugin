@@ -10,7 +10,7 @@ The GoodMem MCP server exposes tools across multiple API namespaces plus local u
 
 **Setup**: The MCP server needs `GOODMEM_BASE_URL` and `GOODMEM_API_KEY`. These can be set as environment variables before launch, or configured from chat via `goodmem_configure`.
 
-**TLS**: If the server uses self-signed or private CA certificates, set `NODE_EXTRA_CA_CERTS=/path/to/rootCA.pem` or `NODE_TLS_REJECT_UNAUTHORIZED=0` (local dev only) as an environment variable before launch.
+**TLS**: If the server uses a private or self-signed CA, set `NODE_EXTRA_CA_CERTS` to the absolute path of its PEM certificate file before launch. Restart the MCP connection after changing this setting. An expired or invalid server certificate must be fixed on the server.
 
 ---
 

@@ -37,12 +37,7 @@ With this plugin, you can operate GoodMem's memory infrastructure in plain Engli
 
 **TLS / self-signed certificates** (optional):
 
-This is an advanced topic. If you do not even know what that is, skip this section. 
-
-If the GoodMem server uses self-signed CA certificates, set one and only one of the following:
-
-- `NODE_EXTRA_CA_CERTS=/path/to/rootCA.pem` — adds the CA to the trusted store. More secure, but requires you to copy the certificate file from the GoodMem server to your machine.
-- `NODE_TLS_REJECT_UNAUTHORIZED=0` — disables certificate verification entirely. Easy and hassle-free, but not recommended for production.
+If the server uses a private or self-signed CA, set `NODE_EXTRA_CA_CERTS` to the absolute path of its PEM certificate file before launching Claude Code. Restart the MCP connection after changing this setting. An expired or invalid server certificate must be fixed on the server.
 
 ### How to configure
 
@@ -63,7 +58,6 @@ Credentials persist for the session. You can reconfigure anytime to switch serve
 export GOODMEM_BASE_URL="https://your-server.example.com"
 export GOODMEM_API_KEY="gm_..."
 export NODE_EXTRA_CA_CERTS="/path/to/rootCA.pem"  # only if needed for self-signed certs
-export NODE_TLS_REJECT_UNAUTHORIZED=0              # only if you want to skip cert verification
 ```
 
 ## Reloading after updates
@@ -77,8 +71,8 @@ After installing a new version or pulling the latest changes, run `/reload-plugi
 | `skills/help/` | Setup guide, available skills overview, example workflows |
 | `skills/python/` | Python SDK reference — method signatures, parameters, examples |
 | `skills/java/` | Java SDK usage reference — setup, builders, streaming, pagination, examples |
-| `skills/mcp/` | MCP tools reference — all 41+ tools with parameters |
-| `.mcp.json` | MCP server with auto-inference from 79 model registries |
+| `skills/mcp/` | MCP workflow guide; tool discovery provides current parameters |
+| `.mcp.json` | MCP server with auto-inference from the built-in model registry |
 
 ### Skills
 
@@ -92,7 +86,7 @@ After installing a new version or pulling the latest changes, run `/reload-plugi
 The MCP server exposes all GoodMem API operations as tools:
 
 - **goodmem_configure** — set server credentials from chat
-- **goodmem_lookup_model** — look up model info from the registry (79 models: 29 embedders, 34 LLMs, 16 rerankers)
+- **goodmem_lookup_model** — look up model info from the built-in registry
 - **embedders** — create, list, get, update, delete embedding models
 - **llms** — create, list, get, update, delete LLM configurations
 - **rerankers** — create, list, get, update, delete reranker models
@@ -116,4 +110,3 @@ SaaS providers (OpenAI, Cohere, Voyage, Jina, and OpenAI-compatible endpoints fo
 - [GoodMem Documentation](https://docs.goodmem.ai)
 - [Python SDK on PyPI](https://pypi.org/project/goodmem/)
 - [MCP Server on npm](https://www.npmjs.com/package/@pairsystems/goodmem-mcp)
-

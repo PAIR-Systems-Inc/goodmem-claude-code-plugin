@@ -23,9 +23,7 @@ Credentials persist for the entire session. The user can call `goodmem_configure
 
 If the user has set `GOODMEM_BASE_URL` and `GOODMEM_API_KEY` environment variables before starting Claude Code, credentials are picked up automatically — no setup needed.
 
-**TLS errors?** If `goodmem_system_info` fails with a certificate verification error (e.g., "self-signed certificate", "unable to verify the first certificate", or "CERT_HAS_EXPIRED"), the GoodMem server is using a self-signed or private CA certificate. Tell the user to set one of these environment variables before launching Claude Code:
-- `NODE_EXTRA_CA_CERTS=/path/to/rootCA.pem` — adds the CA to the trusted store (recommended)
-- `NODE_TLS_REJECT_UNAUTHORIZED=0` — disables certificate verification (local dev only)
+**TLS errors?** For a private or self-signed CA, tell the user to set `NODE_EXTRA_CA_CERTS` to the absolute path of its PEM certificate file before launching Claude Code, then restart the MCP connection. Certificate errors can also indicate an expired or invalid server certificate; those must be fixed on the server.
 
 ## Available Skills
 
