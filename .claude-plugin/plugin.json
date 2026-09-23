@@ -1,7 +1,7 @@
 {
   "name": "goodmem",
   "description": "GoodMem memory infrastructure for AI agents. Use Python SDK skills to write code that manages embedders, spaces, and memories, or use MCP tools to perform GoodMem operations directly via natural language.",
-  "version": "0.1.6",
+  "version": "0.1.7",
   "author": {
     "name": "PAIR Systems",
     "email": "forrest@pairsys.ai"
