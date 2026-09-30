@@ -34,7 +34,7 @@ Constructor parameters:
 - `stream_max_line_bytes` (int, default 8 MiB): Maximum size of a single NDJSON event on the streaming endpoints (`memories.retrieve`, `ping.stream`); a larger event raises `GoodMemError` instead of buffering without bound. `None` or `<= 0` uses the default. SDK-level — unlike the other params it MAY be combined with `http_client`.
 
 Package metadata:
-- `goodmem.__version__` — SDK package version (e.g., `"0.1.35"`)
+- `goodmem.__version__` — SDK package version (e.g., `"0.1.37"`)
 - `goodmem.__based_on_goodmem_commit__` — GoodMem server commit hash this SDK was generated from. Useful for debugging version mismatches between SDK and server.
 
 ## API Reference
@@ -859,14 +859,14 @@ The SDK provides convenience parameters that simplify common patterns.
 
 Pass `model_identifier` to create methods. The SDK auto-infers `provider_type`, `endpoint_url`, `dimensionality`, etc.
 
-**Embedders** (42):
-`text-embedding-3-large`, `text-embedding-3-small`, `embed-v4.0`, `embed-english-v3.0`, `embed-english-light-v3.0`, `embed-multilingual-v3.0`, `embed-multilingual-light-v3.0`, `jina-embeddings-v5-text-small`, `jina-embeddings-v5-text-nano`, `jina-embeddings-v5-omni-small`, `jina-embeddings-v5-omni-nano`, `jina-embeddings-v4`, `jina-code-embeddings-1.5b`, `jina-code-embeddings-0.5b`, `jina-embeddings-v3`, `jina-embeddings-v2-base-en`, `jina-embeddings-v2-base-es`, `jina-embeddings-v2-base-de`, `jina-embeddings-v2-base-zh`, `jina-embeddings-v2-base-code`, `jina-clip-v1`, `jina-clip-v2`, `voyage-4-large`, `voyage-4`, `voyage-4-lite`, `voyage-code-4`, `voyage-code-3`, `voyage-3-large`, `voyage-3.5`, `voyage-3.5-lite`, `voyage-3`, `voyage-3-lite`, `voyage-finance-2`, `voyage-law-2`, `voyage-code-2`, `voyage-multilingual-2`, `text-embedding-v4`, `text-embedding-v3`, `tongyi-embedding-vision-plus`, `tongyi-embedding-vision-flash`, `qwen3-vl-embedding`, `multimodal-embedding-v1`
+**Embedders** (43):
+`text-embedding-3-large`, `text-embedding-3-small`, `embed-v4.0`, `embed-english-v3.0`, `embed-english-light-v3.0`, `embed-multilingual-v3.0`, `embed-multilingual-light-v3.0`, `jina-embeddings-v5-text-small`, `jina-embeddings-v5-text-nano`, `jina-embeddings-v5-omni-small`, `jina-embeddings-v5-omni-nano`, `jina-embeddings-v4`, `jina-code-embeddings-1.5b`, `jina-code-embeddings-0.5b`, `jina-embeddings-v3`, `jina-embeddings-v2-base-en`, `jina-embeddings-v2-base-es`, `jina-embeddings-v2-base-de`, `jina-embeddings-v2-base-zh`, `jina-embeddings-v2-base-code`, `jina-clip-v1`, `jina-clip-v2`, `voyage-4-large`, `voyage-4`, `voyage-4-lite`, `voyage-code-4`, `voyage-code-3`, `voyage-3-large`, `voyage-3.5`, `voyage-3.5-lite`, `voyage-3`, `voyage-3-lite`, `voyage-finance-2`, `voyage-law-2`, `voyage-code-2`, `voyage-multilingual-2`, `text-embedding-v4`, `text-embedding-v3`, `qwen3.7-text-embedding`, `tongyi-embedding-vision-plus`, `tongyi-embedding-vision-flash`, `qwen3-vl-embedding`, `multimodal-embedding-v1`
 
-**LLMs** (32):
-`gpt-5.2`, `gpt-5.2-pro`, `gpt-5.1`, `gpt-5`, `gpt-5-mini`, `gpt-5-nano`, `o3`, `o3-mini`, `o4-mini`, `gpt-4.1`, `gpt-4.1-mini`, `gpt-4.1-nano`, `gpt-4o`, `gpt-4o-mini`, `gpt-4-turbo`, `gpt-3.5-turbo`, `o1`, `o1-mini`, `o1-preview`, `qwen-max`, `qwen-plus`, `qwen-turbo`, `qwen-long`, `qwen3-max`, `qwen3-coder-plus`, `qwen3.7-max`, `qwen3.7-plus`, `qwen3.8-max`, `qwen3.6-flash`, `qwen-vl-max`, `qwen-vl-plus`, `deepseek-v4-pro`
+**LLMs** (45):
+`gpt-5.2`, `gpt-5.2-pro`, `gpt-5.1`, `gpt-5`, `gpt-5-mini`, `gpt-5-nano`, `o3`, `o3-mini`, `o4-mini`, `gpt-4.1`, `gpt-4.1-mini`, `gpt-4.1-nano`, `gpt-4o`, `gpt-4o-mini`, `gpt-4-turbo`, `gpt-3.5-turbo`, `o1`, `qwen-max`, `qwen-plus`, `qwen-turbo`, `qwen-long`, `qwen3-max`, `qwen3-coder-plus`, `qwen3.7-max`, `qwen3.7-plus`, `qwen3.7-flash`, `qwen3.8-max`, `qwen3.8-flash`, `qwen3.6-flash`, `qwen-vl-max`, `qwen-vl-plus`, `deepseek-v4-pro`, `deepseek-v4-flash`, `deepseek-v4.1-flash`, `glm-5.2`, `glm-5.3`, `kimi-k2.6`, `kimi-k3`, `gpt-6-astra`, `gpt-6-sol`, `gpt-6-luna`, `gpt-5.6-sol`, `gpt-5.6-terra`, `gpt-5.6-luna`, `gpt-5.5`
 
-**Rerankers** (19):
-`rerank-v4.0-pro`, `rerank-v4.0-fast`, `rerank-v3.5`, `rerank-english-v3.0`, `rerank-multilingual-v3.0`, `jina-reranker-v3`, `jina-reranker-v2-base-multilingual`, `jina-reranker-v1-base-en`, `jina-reranker-v1-turbo-en`, `jina-reranker-v1-tiny-en`, `rerank-2.5`, `rerank-2.5-lite`, `rerank-2`, `rerank-2-lite`, `rerank-1`, `rerank-lite-1`, `qwen3-vl-rerank`, `gte-rerank-v2`, `qwen3-rerank`
+**Rerankers** (20):
+`rerank-v4.0-pro`, `rerank-v4.0-fast`, `rerank-v3.5`, `rerank-english-v3.0`, `rerank-multilingual-v3.0`, `jina-reranker-v3.5`, `jina-reranker-v3`, `jina-reranker-v2-base-multilingual`, `jina-reranker-v1-base-en`, `jina-reranker-v1-turbo-en`, `jina-reranker-v1-tiny-en`, `rerank-2.5`, `rerank-2.5-lite`, `rerank-2`, `rerank-2-lite`, `rerank-1`, `rerank-lite-1`, `qwen3-vl-rerank`, `gte-rerank-v2`, `qwen3-rerank`
 
 ## Commonly-used types
 
