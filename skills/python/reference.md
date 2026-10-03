@@ -34,7 +34,7 @@ Constructor parameters:
 - `stream_max_line_bytes` (int, default 8 MiB): Maximum size of a single NDJSON event on the streaming endpoints (`memories.retrieve`, `ping.stream`); a larger event raises `GoodMemError` instead of buffering without bound. `None` or `<= 0` uses the default. SDK-level — unlike the other params it MAY be combined with `http_client`.
 
 Package metadata:
-- `goodmem.__version__` — SDK package version (e.g., `"0.1.37"`)
+- `goodmem.__version__` — SDK package version (e.g., `"0.1.39"`)
 - `goodmem.__based_on_goodmem_commit__` — GoodMem server commit hash this SDK was generated from. Useful for debugging version mismatches between SDK and server.
 
 ## API Reference
@@ -310,7 +310,7 @@ Parameters:
 - `post_processor` (PostProcessor, optional): Optional post-processor configuration to transform retrieval results.
 - `prompt` (str, optional): Custom prompt for LLM post-processing. If unset, the server's default prompt is used. Only applies when `llm_id` is set.
 - `relevance_threshold` (float, optional): Minimum relevance score for retrieved memories. Only applies when `reranker_id` is set.
-- `requested_size` (int · int32, optional): Maximum number of memories to retrieve.
+- `requested_size` (int · int32, optional): Maximum number of memories to retrieve. Zero or omitted uses 20; negative values are invalid.
 - `reranker_id` (str, optional): The ID of the reranker to process the retrieved memories. If unset, no reranker will be used.
 - `space_ids` (list[str], optional): A list of space UUID strings, converted to the `space_keys` structure the API requires.
 - `space_keys` (list[SpaceKey], optional): Full space configuration for retrieval — a list of `SpaceKey` dicts, each with a required `space_id` and optional `embedder_weights` (per-embedder ...
