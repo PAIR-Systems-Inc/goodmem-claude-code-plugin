@@ -34,7 +34,7 @@ Constructor parameters:
 - `stream_max_line_bytes` (int, default 8 MiB): Maximum size of a single NDJSON event on the streaming endpoints (`memories.retrieve`, `ping.stream`); a larger event raises `GoodMemError` instead of buffering without bound. `None` or `<= 0` uses the default. SDK-level — unlike the other params it MAY be combined with `http_client`.
 
 Package metadata:
-- `goodmem.__version__` — SDK package version (e.g., `"0.1.39"`)
+- `goodmem.__version__` — SDK package version (e.g., `"0.1.40"`)
 - `goodmem.__based_on_goodmem_commit__` — GoodMem server commit hash this SDK was generated from. Useful for debugging version mismatches between SDK and server.
 
 ## API Reference
@@ -296,16 +296,16 @@ Retrieve Memories
 
 Parameters:
 - `message` (str): Primary query/message for semantic search.
-- `chronological_resort` (bool, optional): Re-sort retrieved memories chronologically after semantic ranking. Defaults to true on the server. Only applies when `llm_id` or `reranker_id` is set.
+- `chronological_resort` (bool, optional): Re-sort memories chronologically after semantic ranking. Defaults to false on the server. Only applies when `llm_id` or `reranker_id` is set.
 - `context` (list[ContextItem], optional): Optional context items (text or binary) to provide additional context for the search.
 - `fetch_memory` (bool, optional): If `True`, memory definition events are streamed. Set to `False` to skip them.
 - `fetch_memory_content` (bool, optional): If `True`, includes the raw content of each memory in the response. Only applicable when `fetch_memory` is `True`.
-- `gen_token_budget` (int, optional): Token budget for LLM post-processing. Must be positive. If the token budget is insufficient, the server will return an error. Defaults to 512 on th...
+- `gen_token_budget` (int, optional): LLM token budget. Uses the first positive value: `output_budget.tokens`, `gen_token_budget`, LLM `default_sampling_params.max_tokens`, then 512. Mu...
 - `hnsw` (HnswOptions, optional): Optional request-level HNSW tuning overrides. Advanced usage; available on POST retrieve.
 - `llm_id` (str, optional): The ID of the LLM to process the retrieved memories, e.g., RAG. Assembles the nested `PostProcessor` structure automatically. If unset, no LLM will...
 - `llm_temp` (float, optional): LLM temperature for post-processing. Valid range is 0.0-2.0. Defaults to 0.3 on the server. Only applies when `llm_id` is set.
 - `logging` (LoggingOptions, optional): Optional durable request logging block for POST retrieve requests. Set logging.enabled=true to opt in, or supply flat scalar logging.callerAttribut...
-- `max_results` (int, optional): Maximum number of retrieved memories to return. Must be positive. Defaults to 10 on the server. Only applies when `llm_id` or `reranker_id` is set.
+- `max_results` (int, optional): Result cap; defaults to positive `requested_size`, otherwise 10. Must be positive. Only applies when `llm_id` or `reranker_id` is set.
 - `output_budget` (TokenBudget, optional): Optional soft cap for generated retrieve replies. When set to a positive token count, chat post-processing uses this value as the LLM completion-to...
 - `post_processor` (PostProcessor, optional): Optional post-processor configuration to transform retrieval results.
 - `prompt` (str, optional): Custom prompt for LLM post-processing. If unset, the server's default prompt is used. Only applies when `llm_id` is set.
@@ -843,12 +843,12 @@ The SDK provides convenience parameters that simplify common patterns.
 - **`memories.retrieve()`**: `llm_id` -> `post_processor.config.llm_id` — The ID of the LLM to process the retrieved memories, e.g., RAG. Assembles the nested `PostProcessor` structure automatically. If unset, no LLM will be used. Setting `llm_id` or `reranker_id` activates post-processing; the remaining post-processor params below (`llm_temp`, `gen_token_budget`, etc.) only take effect when at least one is set.
 - **`memories.retrieve()`**: `reranker_id` -> `post_processor.config.reranker_id` — The ID of the reranker to process the retrieved memories. If unset, no reranker will be used.
 - **`memories.retrieve()`**: `llm_temp` -> `post_processor.config.llm_temp` — LLM temperature for post-processing. Valid range is 0.0-2.0. Defaults to 0.3 on the server. Only applies when `llm_id` is set.
-- **`memories.retrieve()`**: `gen_token_budget` -> `post_processor.config.gen_token_budget` — Token budget for LLM post-processing. Must be positive. If the token budget is insufficient, the server will return an error. Defaults to 512 on the server. Only applies when `llm_id` is set.
+- **`memories.retrieve()`**: `gen_token_budget` -> `post_processor.config.gen_token_budget` — LLM token budget. Uses the first positive value: `output_budget.tokens`, `gen_token_budget`, LLM `default_sampling_params.max_tokens`, then 512. Must be positive. If the token budget is insufficient, the server will return an error. Only applies when `llm_id` is set.
 - **`memories.retrieve()`**: `relevance_threshold` -> `post_processor.config.relevance_threshold` — Minimum relevance score for retrieved memories. Only applies when `reranker_id` is set.
-- **`memories.retrieve()`**: `max_results` -> `post_processor.config.max_results` — Maximum number of retrieved memories to return. Must be positive. Defaults to 10 on the server. Only applies when `llm_id` or `reranker_id` is set.
+- **`memories.retrieve()`**: `max_results` -> `post_processor.config.max_results` — Result cap; defaults to positive `requested_size`, otherwise 10. Must be positive. Only applies when `llm_id` or `reranker_id` is set.
 - **`memories.retrieve()`**: `prompt` -> `post_processor.config.prompt` — Custom prompt for LLM post-processing. If unset, the server's default prompt is used. Only applies when `llm_id` is set.
 - **`memories.retrieve()`**: `sys_prompt` -> `post_processor.config.sys_prompt` — System prompt for LLM post-processing. If unset, the server's default system prompt is used. Only applies when `llm_id` is set.
-- **`memories.retrieve()`**: `chronological_resort` -> `post_processor.config.chronological_resort` — Re-sort retrieved memories chronologically after semantic ranking. Defaults to true on the server. Only applies when `llm_id` or `reranker_id` is set.
+- **`memories.retrieve()`**: `chronological_resort` -> `post_processor.config.chronological_resort` — Re-sort memories chronologically after semantic ranking. Defaults to false on the server. Only applies when `llm_id` or `reranker_id` is set.
 - **`ocr.document()`**: `file_path` — Path to a local file to OCR. Mutually exclusive with `content`.
 - **`ping.stream()`**: `stream` — If `True` (default), returns a `PingStream` context manager that yields events as they arrive from the server. If `False`, collects all events and returns a plain `list[PingEvent]`.
 - **`rerankers.create()`**: `api_key` -> `credentials` — Converts a plain API key string to the full `EndpointAuthentication` structure (i.e. `{"kind": "CREDENTIAL_KIND_API_KEY", "api_key": {"inline_secret": "sk-..."}}`).
