@@ -34,12 +34,12 @@ Constructor parameters:
 - `stream_max_line_bytes` (int, default 8 MiB): Maximum size of a single NDJSON event on the streaming endpoints (`memories.retrieve`, `ping.stream`); a larger event raises `GoodMemError` instead of buffering without bound. `None` or `<= 0` uses the default. SDK-level — unlike the other params it MAY be combined with `http_client`.
 
 Package metadata:
-- `goodmem.__version__` — SDK package version (e.g., `"0.1.41"`)
+- `goodmem.__version__` — SDK package version (e.g., `"0.1.42"`)
 - `goodmem.__based_on_goodmem_commit__` — GoodMem server commit hash this SDK was generated from. Useful for debugging version mismatches between SDK and server.
 
 ## API Reference
 
-Namespaces: `client.embedders`, `client.rerankers`, `client.llms`, `client.spaces`, `client.memories`, `client.ocr`, `client.system`, `client.instance`, `client.users`, `client.service_identities`, `client.user_enrollments`, `client.admin`, `client.access_policy`, `client.apikeys`, `client.ping`
+Namespaces: `client.embedders`, `client.rerankers`, `client.llms`, `client.decision_models`, `client.spaces`, `client.memories`, `client.ocr`, `client.system`, `client.instance`, `client.users`, `client.service_identities`, `client.user_enrollments`, `client.admin`, `client.access_policy`, `client.apikeys`, `client.ping`
 
 ### client.embedders
 
@@ -213,6 +213,71 @@ Delete an LLM
 
 Parameters:
 - `id` (str): The unique identifier of the LLM to delete
+
+### client.decision_models
+
+#### `decision_models.create(display_name: str, endpoint_url: str, model_identifier: str, provider_type: DecisionModelProviderType, api_path=None, configuration=None, credentials=None, decision_model_id=None, description=None, labels=None, monitoring_endpoint=None, owner_id=None, version=None) -> DecisionModelResponse`
+
+Create a decision model
+
+Parameters:
+- `display_name` (str): Name shown in the console and CLI.
+- `endpoint_url` (str): Base URL of the provider, starting with http:// or https://. Do not include a query string, fragment, or username and password.
+- `model_identifier` (str): Model identifier accepted by the provider.
+- `provider_type` (DecisionModelProviderType): Provider used by this model. This cannot be changed after creation.
+- `api_path` (str, optional): Path appended to endpointUrl when sending a request. Jev and Laya use /v1/systemone if omitted. Clef requires the path for your account and model.
+- `configuration` (dict[str, Any], optional): Provider settings. Supported keys are image_preview (Jev only), timeout_millis, and max_response_bytes. These settings cannot change which features...
+- `credentials` (EndpointAuthentication, optional): API key for the provider, supplied in credentials.apiKey.inlineSecret with kind set to CREDENTIAL_KIND_API_KEY. May be omitted for Laya when the en...
+- `decision_model_id` (str · uuid, optional): Optional UUID for the new model. GoodMem generates one if omitted. A UUID that is already in use returns 409; reusing connection settings is allowed.
+- `description` (str, optional): Optional description.
+- `labels` (dict[str, str], optional): Labels for filtering and organization.
+- `monitoring_endpoint` (str, optional): Optional URL for the provider health or metrics endpoint. Must start with http:// or https://.
+- `owner_id` (str · uuid, optional): UUID of the principal that will own the model. If omitted, the authenticated principal becomes the owner.
+- `version` (str, optional): Optional version label.
+
+#### `decision_models.get(id: str, include_credentials=None) -> DecisionModelResponse`
+
+Get a decision model
+
+Parameters:
+- `id` (str): UUID of the decision model
+- `include_credentials` (bool, optional): Include stored credentials. Requires READ_DECISION_MODEL_CREDENTIALS in addition to READ_DECISION_MODEL.
+
+#### `decision_models.list(label=None, owner_id=None, page_size=None, page_token=None, provider_type=None) -> ListDecisionModelsResponse`
+
+List decision models
+
+Parameters:
+- `label` (dict[str, str], optional): Filter by label key-value pairs. Label filters accept either label.<key>=<value> or label[key]=value (for example, label.environment=production or ...
+- `owner_id` (str, optional): Return only decision models owned by this principal UUID.
+- `page_size` (int · int32, optional): Maximum number of models to return, from 1 to 1000. Omit this parameter or use 0 for 50.
+- `page_token` (str, optional): Use nextPageToken from the previous response to request the next page. Keep the filters and pageSize unchanged.
+- `provider_type` (DecisionModelProviderType, optional): Return only decision models that use this provider.
+
+#### `decision_models.update(id: str, request: UpdateDecisionModelRequest | dict) -> DecisionModelResponse`
+
+Update a decision model
+
+Parameters:
+- `id` (str): The unique identifier of the resource to update.
+- `request` (UpdateDecisionModelRequest | dict): The update payload. Accepts a `UpdateDecisionModelRequest` instance or a plain dict with the same fields. Only specified fields will be modified.
+
+#### `decision_models.delete(id: str) -> None`
+
+Delete a decision model
+
+Parameters:
+- `id` (str): UUID of the decision model
+
+#### `decision_models.decide(id: str, questions: dict[str, DecisionQuestion], state: DecisionContent, attachments=None) -> DecisionResponse`
+
+Request decisions from a model
+
+Parameters:
+- `id` (str): UUID of the decision model
+- `questions` (dict[str, DecisionQuestion]): Questions keyed by names that you choose. The model must support each question type and its media.
+- `state` (DecisionContent): Content evaluated by all questions.
+- `attachments` (list[DecisionMedia], optional): Media files included with the request. Their order is preserved within each media type.
 
 ### client.spaces
 

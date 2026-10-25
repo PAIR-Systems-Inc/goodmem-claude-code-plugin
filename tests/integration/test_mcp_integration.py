@@ -1278,3 +1278,36 @@ class TestMcpAdminTools:
             assert not _is_error_response(del_resp), (
                 f"policy delete failed: {del_resp}"
             )
+
+
+@pytest.mark.integration
+class TestMcpDecisionModels:
+    """Registration is local; provider evaluation requires a separately opted-in model."""
+
+    def test_crud(self, mcp_session: McpSession):
+        created = _tool_result(mcp_session.call_tool("goodmem_decision_models_create", {
+            "display_name": "MCP decision fixture", "provider_type": "LAYA",
+            "endpoint_url": "http://localhost:8000", "model_identifier": "laya",
+        }))
+        model_id = created["decisionModelId"]
+        try:
+            fetched = _tool_result(mcp_session.call_tool("goodmem_decision_models_get", {"id": model_id}))
+            assert fetched.get("credentials") is None
+            page = _tool_result(mcp_session.call_tool("goodmem_decision_models_list", {"page_size": 1}))
+            assert isinstance(page["decisionModels"], list)
+            assert page["totalCount"] >= 1
+            updated = _tool_result(mcp_session.call_tool("goodmem_decision_models_update", {
+                "id": model_id, "display_name": "Updated MCP fixture", "monitoring_endpoint": "",
+            }))
+            assert updated["displayName"] == "Updated MCP fixture"
+        finally:
+            deleted = mcp_session.call_tool("goodmem_decision_models_delete", {"id": model_id})
+            assert not _is_error_response(deleted), _error_text(deleted)
+
+    def test_opted_in_evaluation(self, mcp_session: McpSession):
+        model_id = _env_or_skip("GOODMEM_DECISION_MODEL_EVAL_ID")
+        result = _tool_result(mcp_session.call_tool("goodmem_decision_models_decide", {
+            "id": model_id, "state": {"text": "The account has been verified."},
+            "questions": {"verified": {"noul": {}}},
+        }))
+        assert 0 <= result["answers"]["verified"]["noul"]["probabilityTrue"] <= 1
