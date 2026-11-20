@@ -34,7 +34,7 @@ Constructor parameters:
 - `stream_max_line_bytes` (int, default 8 MiB): Maximum size of a single NDJSON event on the streaming endpoints (`memories.retrieve`, `ping.stream`); a larger event raises `GoodMemError` instead of buffering without bound. `None` or `<= 0` uses the default. SDK-level — unlike the other params it MAY be combined with `http_client`.
 
 Package metadata:
-- `goodmem.__version__` — SDK package version (e.g., `"0.1.45"`)
+- `goodmem.__version__` — SDK package version (e.g., `"0.1.46"`)
 - `goodmem.__based_on_goodmem_commit__` — GoodMem server commit hash this SDK was generated from. Useful for debugging version mismatches between SDK and server.
 
 ## API Reference
@@ -43,7 +43,7 @@ Namespaces: `client.embedders`, `client.rerankers`, `client.llms`, `client.decis
 
 ### client.embedders
 
-#### `embedders.create(display_name: str, model_identifier: str, api_key=None, api_path=None, credentials=None, dashscope_api_dialect=None, description=None, dimensionality=None, distribution_type="DENSE", embedder_id=None, endpoint_url=None, gemini_endpoint_config=None, labels=None, max_sequence_length=None, monitoring_endpoint=None, owner_id=None, provider_type=None, supported_modalities=None, version=None) -> EmbedderResponse`
+#### `embedders.create(display_name: str, model_identifier: str, api_key=None, api_path=None, credentials=None, dashscope_api_dialect=None, description=None, dimensionality=None, distribution_type="DENSE", embedder_id=None, endpoint_url=None, gemini_endpoint_config=None, input_format=None, labels=None, max_sequence_length=None, monitoring_endpoint=None, owner_id=None, provider_type=None, supported_modalities=None, version=None) -> EmbedderResponse`
 
 Create a new embedder
 
@@ -60,6 +60,7 @@ Parameters:
 - `embedder_id` (str · uuid, optional): Optional client-provided UUID for idempotent creation. If not provided, server generates a new UUID. Returns ALREADY_EXISTS if ID is already in use.
 - `endpoint_url` (str, optional): Base URL for the embedding endpoint. Auto-inferred from `provider_type` for providers with one canonical base URL. Gemini has distinct Developer an...
 - `gemini_endpoint_config` (GeminiEndpointConfig, optional): Gemini backend routing. Valid only for the GEMINI provider. Omit to use the Developer API; when present, backend is required and the gRPC service v...
+- `input_format` (ModelInputFormat, optional): Instruction and templates applied to query and document text before embedding. A nonempty format is not accepted for VOYAGE, COHERE, JINA, or DASHS...
 - `labels` (dict[str, str], optional): User-defined labels for categorization
 - `max_sequence_length` (int · int32, optional): Maximum token length accepted by the model. Auto-inferred from `model_identifier` for known models; required when `model_identifier` is not in the ...
 - `monitoring_endpoint` (str, optional): Monitoring endpoint URL
@@ -102,7 +103,7 @@ Parameters:
 
 ### client.rerankers
 
-#### `rerankers.create(display_name: str, model_identifier: str, api_key=None, api_path=None, credentials=None, dashscope_api_dialect=None, description=None, endpoint_url=None, labels=None, monitoring_endpoint=None, owner_id=None, provider_type=None, reranker_id=None, supported_modalities=None, version=None) -> RerankerResponse`
+#### `rerankers.create(display_name: str, model_identifier: str, api_key=None, api_path=None, credentials=None, dashscope_api_dialect=None, description=None, endpoint_url=None, input_format=None, labels=None, monitoring_endpoint=None, owner_id=None, provider_type=None, reranker_id=None, supported_modalities=None, version=None) -> RerankerResponse`
 
 Create a new reranker
 
@@ -115,6 +116,7 @@ Parameters:
 - `dashscope_api_dialect` (DashScopeApiDialect, optional): DashScope request and response API dialect. Valid only for the DASHSCOPE provider. Omit to infer the dialect from apiPath, the model catalog, or th...
 - `description` (str, optional): Description of the reranker
 - `endpoint_url` (str, optional): Base URL for the reranking endpoint. Auto-inferred from `provider_type` for known providers; required when `model_identifier` is not in the registry.
+- `input_format` (ModelInputFormat, optional): Instruction and templates applied to query and candidate text before reranking. Accepted for every provider. An instruction that queryTemplate does...
 - `labels` (dict[str, str], optional): User-defined labels for categorization
 - `monitoring_endpoint` (str, optional): Monitoring endpoint URL
 - `owner_id` (str · uuid, optional): Optional owner principal UUID. If omitted, defaults to the authenticated principal. CREATE_RERANKER is evaluated against the proposed reranker and ...
@@ -355,7 +357,7 @@ Parameters:
 - `original_content_b64` (str, optional): Original content as base64-encoded binary data. Mutually exclusive with `file_path` and `original_content`.
 - `original_content_ref` (str, optional): Reference to external content location. Functions as a metadata field. Does not make Goodmem download the content from the URL and use it to create...
 
-#### `memories.retrieve(message: str, chronological_resort=None, context=None, fetch_memory=None, fetch_memory_content=None, gen_token_budget=None, hnsw=None, llm_id=None, llm_temp=None, logging=None, max_results=None, output_budget=None, post_processor=None, prompt=None, relevance_threshold=None, requested_size=None, reranker_id=None, space_ids=None, space_keys=None, stream=True, sys_prompt=None) -> RetrieveMemoryStream | list[RetrieveMemoryEvent]`
+#### `memories.retrieve(message: str, chronological_resort=None, context=None, embedder_query_formats=None, fetch_memory=None, fetch_memory_content=None, gen_token_budget=None, hnsw=None, llm_id=None, llm_temp=None, logging=None, max_results=None, output_budget=None, post_processor=None, prompt=None, query_instruction=None, relevance_threshold=None, requested_size=None, reranker_id=None, space_ids=None, space_keys=None, stream=True, sys_prompt=None) -> RetrieveMemoryStream | list[RetrieveMemoryEvent]`
 
 Retrieve Memories
 
@@ -363,6 +365,7 @@ Parameters:
 - `message` (str): Primary query/message for semantic search.
 - `chronological_resort` (bool, optional): Re-sort memories chronologically after semantic ranking. Defaults to false on the server. Only applies when `llm_id` or `reranker_id` is set.
 - `context` (list[ContextItem], optional): Optional context items (text or binary) to provide additional context for the search.
+- `embedder_query_formats` (list[EmbedderQueryFormat], optional): Optional per-embedder overrides of the stored query format for this request, at most one entry per embedder. An entry's instruction, including an e...
 - `fetch_memory` (bool, optional): If `True`, memory definition events are streamed. Set to `False` to skip them.
 - `fetch_memory_content` (bool, optional): If `True`, includes the raw content of each memory in the response. Only applicable when `fetch_memory` is `True`.
 - `gen_token_budget` (int, optional): LLM token budget. Uses the first positive value: `output_budget.tokens`, `gen_token_budget`, LLM `default_sampling_params.max_tokens`, then 512. Mu...
@@ -374,6 +377,7 @@ Parameters:
 - `output_budget` (TokenBudget, optional): Optional soft cap for generated retrieve replies. When set to a positive token count, chat post-processing uses this value as the LLM completion-to...
 - `post_processor` (PostProcessor, optional): Optional post-processor configuration to transform retrieval results.
 - `prompt` (str, optional): Custom prompt for LLM post-processing. If unset, the server's default prompt is used. Only applies when `llm_id` is set.
+- `query_instruction` (str, optional): Optional task instruction for this request. It applies to query embedding only. Every embedder whose query template reads `{{ instruction }}` uses ...
 - `relevance_threshold` (float, optional): Minimum relevance score for retrieved memories. Only applies when `reranker_id` is set.
 - `requested_size` (int · int32, optional): Maximum number of memories to retrieve. Zero or omitted uses 20; negative values are invalid.
 - `reranker_id` (str, optional): The ID of the reranker to process the retrieved memories. If unset, no reranker will be used.
