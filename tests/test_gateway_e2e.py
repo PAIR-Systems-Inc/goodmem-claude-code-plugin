@@ -6,6 +6,10 @@ instance, accepted on staging only. The scratch instance's own REST API is used
 to plant a memory that fails processing and observe its status. Cleanup through
 the gateway verifies that each deleted test memory is gone; failures fail the run.
 
+Before the tests run, setup polls goodmem_ping for up to 180 seconds when the
+gateway explicitly reports that the instance is still waking. Each ping uses
+the remaining readiness time as its timeout, capped at the normal 120 seconds.
+
 Environment, all four required (the suite skips when any is missing):
   GOODMEM_GATEWAY_URL            the gateway's /mcp URL (CI: set in the gtool scenario)
   GOODMEM_GATEWAY_DEV_TOKEN      the dev token (Infisical GOODMEM_E2E_GATEWAY_DEV_TOKEN)
@@ -46,6 +50,11 @@ import pytest
 
 PLUGIN_DIR = Path(__file__).resolve().parent.parent
 SPACE_NAME = "claude-plugin-ci"
+GATEWAY_READY_TIMEOUT = 180.0
+GATEWAY_READY_POLL_INTERVAL = 5.0
+_WAKE_RESPONSE_SUFFIX = (
+    " was paused and is still waking up. Nothing was sent to it; try again in a minute."
+)
 RUN = os.environ.get("GITHUB_RUN_ID") or uuid.uuid4().hex[:8]
 RUN_TAG = f"[suite run {RUN}]"
 MEMORIES = [
@@ -97,14 +106,14 @@ class Gateway:
         self.n += 1
         return self.n
 
-    def _post(self, body: dict, expect_reply: bool = True) -> dict:
+    def _post(self, body: dict, expect_reply: bool = True, *, timeout: float = 120) -> dict:
         headers = {"Content-Type": "application/json", "Accept": "application/json, text/event-stream",
                    "Authorization": "Bearer " + self.token, "MCP-Protocol-Version": "2025-06-18"}
         if self.session:
             headers["mcp-session-id"] = self.session
         request = urllib.request.Request(self.url, json.dumps(body).encode(), headers)
         try:
-            with urllib.request.urlopen(request, timeout=120) as response:
+            with urllib.request.urlopen(request, timeout=timeout) as response:
                 self.session = response.headers.get("mcp-session-id", self.session)
                 raw = response.read().decode()
         except urllib.error.HTTPError as error:
@@ -122,9 +131,10 @@ class Gateway:
     def tools(self) -> dict[str, dict]:
         return {t["name"]: t for t in self._post({"jsonrpc": "2.0", "id": self._next(), "method": "tools/list"})["result"]["tools"]}
 
-    def call(self, name: str, arguments: dict | None = None) -> tuple[bool, dict | str]:
+    def call(self, name: str, arguments: dict | None = None, *,
+             timeout: float = 120) -> tuple[bool, dict | str]:
         result = self._post({"jsonrpc": "2.0", "id": self._next(), "method": "tools/call",
-                             "params": {"name": name, "arguments": arguments or {}}})["result"]
+                             "params": {"name": name, "arguments": arguments or {}}}, timeout=timeout)["result"]
         structured = result.get("structuredContent")
         text = "".join(c.get("text", "") for c in result.get("content", []) if c.get("type") == "text")
         if structured is None:
@@ -170,10 +180,38 @@ def test_dev_token_has_the_gateway_bearer_shape():
     assert len(decoded) == 32, f"GOODMEM_GATEWAY_DEV_TOKEN decodes to {len(decoded)} bytes, not 32"
 
 
+def _wait_for_gateway_ready(gateway: Gateway) -> tuple[bool, dict | str]:
+    """Retry only the gateway's explicit pre-forward wake response during setup."""
+    deadline = time.monotonic() + GATEWAY_READY_TIMEOUT
+    attempts = 0
+    last_response = "No ping response received."
+    while True:
+        remaining = deadline - time.monotonic()
+        if remaining <= 0:
+            raise AssertionError(
+                f"Gateway readiness timed out after {GATEWAY_READY_TIMEOUT:g}s "
+                f"({attempts} ping attempts). Last response: {last_response[:400]}"
+            )
+        attempts += 1
+        is_error, payload = gateway.call("goodmem_ping", timeout=min(120.0, remaining))
+        waking = (
+            is_error
+            and isinstance(payload, str)
+            and payload.startswith("Your GoodMem Cloud instance ")
+            and payload.endswith(_WAKE_RESPONSE_SUFFIX)
+        )
+        if not waking:
+            return is_error, payload
+        last_response = payload
+        remaining = deadline - time.monotonic()
+        if remaining > 0:
+            time.sleep(min(GATEWAY_READY_POLL_INTERVAL, remaining))
+
+
 @pytest.fixture(scope="module")
 def gateway() -> Gateway:
     gateway = Gateway(GATEWAY, TOKEN)
-    is_error, payload = gateway.call("goodmem_ping")
+    is_error, payload = _wait_for_gateway_ready(gateway)
     if is_error and "not responding" in str(payload):
         # The gateway's wording for a paused or unreachable instance (instance_errors.go). That is
         # the scratch instance's state, not the plugin's behaviour, so the suite steps aside loudly

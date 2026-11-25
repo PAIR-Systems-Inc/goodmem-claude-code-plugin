@@ -30,11 +30,12 @@ Constructor parameters:
 - `api_key` (str): GoodMem API key (prefix `gm_`), sent as `x-api-key` header. Mutually exclusive with `http_client`.
 - `timeout` (float, default 30.0): HTTP timeout in seconds. Mutually exclusive with `http_client`.
 - `verify` (bool | str, default True): SSL certificate verification. Pass `False` to skip, or a file path to a CA bundle. Mutually exclusive with `http_client`.
-- `http_client` (httpx.Client): Pre-configured httpx client with base URL and auth headers. Mutually exclusive with all other params.
+- `http_client` (httpx.Client): Pre-configured httpx client with base URL and auth headers. Mutually exclusive with `base_url`, `api_key`, `timeout`, and `verify`; may be combined with `retry` and `stream_max_line_bytes`.
+- `retry` (`RetryPolicy | None`, default `RetryPolicy()`): Import `RetryPolicy` from `goodmem`. Configure with `RetryPolicy(wake_timeout=180.0)` (seconds); `None` disables all retries. May be combined with `http_client`. Every retry requires HTTP 503, a valid `Retry-After`, `X-Goodmem-Activator-Wake: retry`, and a replayable body. The budget limits retry starts, not active attempts. Each attempt keeps its normal timeout; the final attempt can finish after the budget.
 - `stream_max_line_bytes` (int, default 8 MiB): Maximum size of a single NDJSON event on the streaming endpoints (`memories.retrieve`, `ping.stream`); a larger event raises `GoodMemError` instead of buffering without bound. `None` or `<= 0` uses the default. SDK-level — unlike the other params it MAY be combined with `http_client`.
 
 Package metadata:
-- `goodmem.__version__` — SDK package version (e.g., `"0.1.46"`)
+- `goodmem.__version__` — SDK package version (e.g., `"0.1.47"`)
 - `goodmem.__based_on_goodmem_commit__` — GoodMem server commit hash this SDK was generated from. Useful for debugging version mismatches between SDK and server.
 
 ## API Reference
